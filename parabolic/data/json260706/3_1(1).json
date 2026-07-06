@@ -1,0 +1,160 @@
+{
+	"Index":1,
+	"Name":"3_1",
+	"Hyperbolic":false,
+	"Torus":true,
+	"Satellite":false,
+	"Diagrams":[
+		{
+			"Scode":"{4, 6, 2}",
+			"Acode":"{3, 1, 2}",
+			"PDcode":[
+				"{1, 5, 2, 4}",
+				"{3, 1, 4, 6}",
+				"{5, 3, 6, 2}"
+			],
+			"SolvingSeqs":[
+				[
+					"{1, 2}",
+					[],
+					[
+						"{1, 2, 3, 2}"
+					],
+					"{2}",
+					"{1}",
+					1
+				]
+			]
+		}
+	],
+	"ParabolicReps":[
+		{
+			"DiagramIdx":1,
+			"SolvingSeqIdx":1,
+			"u":{
+				"CheckEq":[
+					"-1 - u",
+					"u + u^2"
+				],
+				"TimingForPrimaryIdeals":0.117463
+			},
+			"v":{
+				"CheckEq":[
+					"-1 + v"
+				],
+				"TimingForPrimaryIdeals":5.1239e-2
+			},
+			"PrimaryIdeals":[
+				{
+					"IdealName":"J3_1_1",
+					"Generators":[
+						"1 + u"
+					],
+					"VariableOrder":[
+						"u"
+					],
+					"Characteristic":0,
+					"KnownGroebner":[],
+					"Status":[
+						"vCompNormalize"
+					],
+					"MonomialOrder":"lex",
+					"IsHomogeneous":false,
+					"IsZeroDim":true,
+					"IdealDimension":0,
+					"ZeroDimensionalVars":[
+						"u"
+					],
+					"Timings":{
+						"TimingmagmaVCompNormalize":7.63e-4,
+						"TimingComplexVolumeN":6.09e-2,
+						"TimingObstruction":1.02e-4,
+						"TiminguValues_ij":9.4e-5,
+						"TiminguPolys_ij_N":3.5e-5
+					},
+					"ComplexVolumeN":[
+						-1.64493406684822643647241516664602518921894990120679843773555822937000747040320087383362890061975870530400431896233719068
+					],
+					"SortedReprnIndices":"{1}",
+					"Abelian":false,
+					"Obstruction":-1,
+					"ij_list":[
+						[
+							"{1, 2}",
+							"{2, 3}"
+						],
+						[
+							"{1, 3}"
+						]
+					],
+					"uPolys_ij_N":[
+						"1 + u",
+						"1 + u"
+					],
+					"uPolysN":[
+						"1 + u",
+						"1 - u",
+						"1 - u"
+					]
+				},
+				{
+					"IdealName":"abJ3_1_2",
+					"Generators":[
+						"-1 + v"
+					],
+					"VariableOrder":[
+						"v"
+					],
+					"Characteristic":0,
+					"KnownGroebner":[],
+					"Status":[
+						"vCompNormalize"
+					],
+					"MonomialOrder":"lex",
+					"IsHomogeneous":false,
+					"IsZeroDim":true,
+					"IdealDimension":0,
+					"ZeroDimensionalVars":[
+						"v"
+					],
+					"Timings":{
+						"TimingmagmaVCompNormalize":6.79e-4,
+						"TimingComplexVolumeN":2.9346e-2,
+						"TimingObstruction":7.5e-5,
+						"TiminguValues_ij":4.0e-5,
+						"TiminguPolys_ij_N":1.1e-5
+					},
+					"ComplexVolumeN":"{0}",
+					"SortedReprnIndices":"{1}",
+					"Abelian":true,
+					"Obstruction":1,
+					"ij_list":[
+						[
+							"{1, 2}",
+							"{1, 3}",
+							"{2, 3}"
+						]
+					],
+					"uPolys_ij_N":[
+						"u"
+					],
+					"uPolysN":[
+						"u",
+						"-u",
+						"-u"
+					]
+				}
+			],
+			"uPolyC":[
+				"1 + u",
+				"1 - u",
+				"1 - u"
+			],
+			"RileyPolyC":[
+				"-1 + y",
+				"1 - y",
+				"1 - y"
+			]
+		}
+	]
+}

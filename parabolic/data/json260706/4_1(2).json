@@ -1,0 +1,182 @@
+{
+	"Index":2,
+	"Name":"4_1",
+	"Hyperbolic":true,
+	"Torus":false,
+	"Satellite":false,
+	"Diagrams":[
+		{
+			"Scode":"{-6, 8, -2, 4}",
+			"Acode":"{-4, 1, -2, 3}",
+			"PDcode":[
+				"{1, 6, 2, 7}",
+				"{3, 1, 4, 8}",
+				"{5, 2, 6, 3}",
+				"{7, 5, 8, 4}"
+			],
+			"SolvingSeqs":[
+				[
+					"{1, 3}",
+					[],
+					[
+						"{3, 1, 2, 2}",
+						"{1, 3, 4, 2}"
+					],
+					"{1}",
+					"{3}",
+					3
+				]
+			],
+			"GeometricRepresentation":{
+				"Volume":2.0298832128193072500424051085490405718833786150605995840349782135531949525164880442729407084565133898917236550627197752519507,
+				"ChernSimons":0
+			}
+		}
+	],
+	"ParabolicReps":[
+		{
+			"DiagramIdx":1,
+			"SolvingSeqIdx":1,
+			"u":{
+				"CheckEq":[
+					"1 - u + u^2",
+					"-u - u^4"
+				],
+				"TimingForPrimaryIdeals":4.8175e-2
+			},
+			"v":{
+				"CheckEq":[
+					"1 - v"
+				],
+				"TimingForPrimaryIdeals":5.1092e-2
+			},
+			"PrimaryIdeals":[
+				{
+					"IdealName":"J4_1_0",
+					"Generators":[
+						"1 - u + u^2"
+					],
+					"VariableOrder":[
+						"u"
+					],
+					"Characteristic":0,
+					"KnownGroebner":[],
+					"Status":[
+						"vCompNormalize"
+					],
+					"MonomialOrder":"lex",
+					"IsHomogeneous":false,
+					"IsZeroDim":true,
+					"IdealDimension":0,
+					"ZeroDimensionalVars":[
+						"u"
+					],
+					"Timings":{
+						"TimingmagmaVCompNormalize":7.58e-4,
+						"TimingComplexVolumeN":9.5161e-2,
+						"TimingObstruction":2.21e-4,
+						"TiminguValues_ij":8.7e-5,
+						"TiminguPolys_ij_N":9.2e-5
+					},
+					"ComplexVolumeN":[
+						"2.029883212819307250042405108549040571883378615060599584034978213553194952516488044272940708456513389891723655062719775251950721641481927`124.39104850287627*I",
+						"-2.029883212819307250042405108549040571883378615060599584034978213553194952516488044272940708456513389891723655062731361875380396853109852`109.81563138884542*I"
+					],
+					"GeometricComponent":"{1, 2}",
+					"SortedReprnIndices":"{1, 2}",
+					"Abelian":false,
+					"Obstruction":-1,
+					"ij_list":[
+						[
+							"{1, 2}",
+							"{1, 3}",
+							"{3, 4}"
+						],
+						[
+							"{1, 4}",
+							"{2, 3}"
+						],
+						[
+							"{2, 4}"
+						]
+					],
+					"uPolys_ij_N":[
+						"1 + u + u^2",
+						"1 - u + u^2",
+						"1 - u + u^2"
+					],
+					"uPolysN":[
+						"1 - u + u^2",
+						"1 - u + u^2",
+						"1 + u + u^2",
+						"1 - u + u^2"
+					]
+				},
+				{
+					"IdealName":"abJ4_1_1",
+					"Generators":[
+						"-1 + v"
+					],
+					"VariableOrder":[
+						"v"
+					],
+					"Characteristic":0,
+					"KnownGroebner":[],
+					"Status":[
+						"vCompNormalize"
+					],
+					"MonomialOrder":"lex",
+					"IsHomogeneous":false,
+					"IsZeroDim":true,
+					"IdealDimension":0,
+					"ZeroDimensionalVars":[
+						"v"
+					],
+					"Timings":{
+						"TimingmagmaVCompNormalize":3.99e-4,
+						"TimingComplexVolumeN":2.5866e-2,
+						"TimingObstruction":9.1e-5,
+						"TiminguValues_ij":5.4e-5,
+						"TiminguPolys_ij_N":1.1e-5
+					},
+					"ComplexVolumeN":"{0}",
+					"GeometricComponent":0,
+					"SortedReprnIndices":"{1}",
+					"Abelian":true,
+					"Obstruction":1,
+					"ij_list":[
+						[
+							"{1, 2}",
+							"{1, 3}",
+							"{1, 4}",
+							"{2, 3}",
+							"{2, 4}",
+							"{3, 4}"
+						]
+					],
+					"uPolys_ij_N":[
+						"u"
+					],
+					"uPolysN":[
+						"u",
+						"-u",
+						"-u",
+						"-u"
+					]
+				}
+			],
+			"uPolyC":[
+				"1 - u + u^2",
+				"1 - u + u^2",
+				"1 + u + u^2",
+				"1 - u + u^2"
+			],
+			"RileyPolyC":[
+				"1 + y + y^2",
+				"1 + y + y^2",
+				"1 + y + y^2",
+				"1 + y + y^2"
+			]
+		}
+	]
+}
