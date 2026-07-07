@@ -73,7 +73,7 @@
 
     .toolbar {
       display: grid;
-      grid-template-columns: minmax(220px, 1fr) auto auto auto;
+      grid-template-columns: minmax(220px, 1fr) auto auto auto auto;
       gap: 10px;
       align-items: center;
       margin-bottom: 14px;
@@ -129,10 +129,20 @@
 
     table {
       width: 100%;
-      min-width: 1240px;
+      min-width: 1450px;
       border-collapse: separate;
       border-spacing: 0;
+      table-layout: fixed;
     }
+
+    col.col-index { width: 72px; }
+    col.col-knot { width: 110px; }
+    col.col-hyp { width: 64px; }
+    col.col-volume { width: 230px; }
+    col.col-count { width: 76px; }
+    col.col-matrix { width: 560px; }
+    col.col-repo { width: 175px; }
+    col.col-new { width: 163px; }
 
     th,
     td {
@@ -152,6 +162,31 @@
       font-weight: 650;
       color: #26313f;
       white-space: nowrap;
+    }
+
+    .table-wrap th:nth-child(1),
+    .table-wrap td:nth-child(1) {
+      text-align: right;
+    }
+
+    .table-wrap th:nth-child(3),
+    .table-wrap td:nth-child(3),
+    .table-wrap th:nth-child(5),
+    .table-wrap td:nth-child(5),
+    .table-wrap th:nth-child(7),
+    .table-wrap td:nth-child(7),
+    .table-wrap th:nth-child(8),
+    .table-wrap td:nth-child(8) {
+      text-align: center;
+    }
+
+    .table-wrap th:nth-child(2),
+    .table-wrap td:nth-child(2),
+    .table-wrap th:nth-child(4),
+    .table-wrap td:nth-child(4),
+    .table-wrap th:nth-child(6),
+    .table-wrap td:nth-child(6) {
+      text-align: left;
     }
 
     tbody tr:nth-child(even) {
@@ -191,6 +226,68 @@
       font-weight: 700;
     }
 
+    .chip.positive-dim {
+      border-color: var(--warn);
+      background: #fff4db;
+      color: #6b4300;
+      font-weight: 700;
+    }
+
+    .ideal-matrix {
+      display: block;
+      gap: 2px;
+      color: #313b49;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px;
+      max-width: 100%;
+      overflow-x: auto;
+      padding-bottom: 3px;
+      white-space: nowrap;
+    }
+
+    .ideal-matrix::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    .ideal-matrix::-webkit-scrollbar-track {
+      background: #eef1f5;
+    }
+
+    .ideal-matrix::-webkit-scrollbar-thumb {
+      background: #c2cbd6;
+      border-radius: 999px;
+    }
+
+    .matrix-row {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      flex-wrap: nowrap;
+      width: max-content;
+    }
+
+    .matrix-label {
+      flex: 0 0 24px;
+      min-width: 24px;
+      color: var(--muted);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .matrix-brace,
+    .matrix-comma {
+      color: var(--muted);
+    }
+
+    .matrix-row .chip {
+      flex: 0 0 auto;
+      margin: 0;
+      padding: 0 6px;
+      min-width: 38px;
+      text-align: center;
+    }
+
     .links {
       white-space: nowrap;
     }
@@ -212,6 +309,7 @@
       color: #313b49;
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       font-size: 13px;
+      overflow-wrap: anywhere;
     }
 
     .muted {
@@ -298,6 +396,64 @@
       margin: 14px 0 8px;
       font-size: 15px;
       font-weight: 650;
+    }
+
+    .summary-table {
+      width: 100%;
+      min-width: 0;
+      border-collapse: collapse;
+      border-spacing: 0;
+      margin-bottom: 12px;
+    }
+
+    .summary-table th,
+    .summary-table td {
+      position: static;
+      border: 1px solid var(--line);
+      padding: 8px 10px;
+      background: #fff;
+      color: var(--text);
+      font-size: 14px;
+      text-align: left;
+      vertical-align: top;
+      white-space: normal;
+    }
+
+    .summary-table th {
+      width: 180px;
+      background: #f1f4f7;
+      font-weight: 650;
+    }
+
+    .summary-table .volume {
+      max-width: none;
+    }
+
+    .viewer-check {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin: 10px 0;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .viewer-check input {
+      height: auto;
+      min-width: auto;
+    }
+
+    .viewer-notice {
+      border: 1px solid var(--warn);
+      background: #fff8e8;
+      color: #5f3b00;
+      padding: 8px 10px;
+      margin: 10px 0;
+      font-size: 14px;
+    }
+
+    .determinant-block[hidden] {
+      display: none;
     }
 
     .viewer-list {
@@ -391,6 +547,12 @@
       background: #fff;
     }
 
+    .viewer-note {
+      color: var(--muted);
+      margin: 0 0 10px;
+      font-size: 13px;
+    }
+
     .empty {
       padding: 24px;
       color: var(--muted);
@@ -432,6 +594,11 @@
         <option value="true">Hyperbolic</option>
         <option value="false">Non-hyperbolic</option>
       </select>
+      <select id="dimension-filter" aria-label="Dimension filter">
+        <option value="">All dimensions</option>
+        <option value="positive">Has positive-dimensional ideal</option>
+        <option value="zero">Zero-dimensional ideals only</option>
+      </select>
       <select id="page-size" aria-label="Rows per page">
         <option value="50">50 rows</option>
         <option value="100" selected>100 rows</option>
@@ -451,6 +618,16 @@
 
     <div class="table-wrap">
       <table>
+        <colgroup>
+          <col class="col-index">
+          <col class="col-knot">
+          <col class="col-hyp">
+          <col class="col-volume">
+          <col class="col-count">
+          <col class="col-matrix">
+          <col class="col-repo">
+          <col class="col-new">
+        </colgroup>
         <thead>
           <tr>
             <th>Index</th>
@@ -458,8 +635,7 @@
             <th>Hyp.</th>
             <th>Geometric complex volume</th>
             <th># ideals</th>
-            <th>Solutions by ideal</th>
-            <th>Obstructions</th>
+            <th>Ideal matrix</th>
             <th>Repository data</th>
             <th>New JSON</th>
           </tr>
@@ -487,10 +663,12 @@
     let filtered = [];
     let page = 1;
     const jsonCache = new Map();
+    let activeViewerPanel = "summary";
 
     const searchInput = document.getElementById("search");
     const crossingFilter = document.getElementById("crossing-filter");
     const hyperbolicFilter = document.getElementById("hyperbolic-filter");
+    const dimensionFilter = document.getElementById("dimension-filter");
     const pageSizeSelect = document.getElementById("page-size");
     const resultCount = document.getElementById("result-count");
     const pageLabel = document.getElementById("page-label");
@@ -528,42 +706,102 @@
       if (!values || values.length === 0) {
         return '<span class="muted">none marked</span>';
       }
+      const conjugatePair = formatConjugateVolumePair(values);
+      if (conjugatePair) {
+        return conjugatePair;
+      }
       return values.map(value => formatComplexVolume(value)).join("<br>");
     }
 
+    function stripPrecision(value) {
+      return String(value).replace(/`\d+(?:\.\d+)?/g, "");
+    }
+
+    function shortNumber(value) {
+      const rounded = Number(value).toFixed(4);
+      return rounded.replace(/\.?0+$/, "");
+    }
+
+    function parseComplexParts(value) {
+      const cleaned = stripPrecision(value).replace(/\s+/g, " ").trim();
+      const match = cleaned.match(/^([+-]?\d+(?:\.\d+)?)(?:\s*([+-])\s*(\d+(?:\.\d+)?)\s*\*?\s*I)?$/);
+      if (!match) {
+        return null;
+      }
+      const real = Number(match[1]);
+      const imaginary = match[2] ? Number(`${match[2]}${match[3]}`) : 0;
+      if (!Number.isFinite(real) || !Number.isFinite(imaginary)) {
+        return null;
+      }
+      return { real, imaginary };
+    }
+
+    function formatConjugateVolumePair(values) {
+      if (!Array.isArray(values) || values.length !== 2) {
+        return null;
+      }
+      const first = parseComplexParts(values[0]);
+      const second = parseComplexParts(values[1]);
+      if (!first || !second) {
+        return null;
+      }
+      if (Math.abs(first.real - second.real) > 1e-6 || Math.abs(first.imaginary + second.imaginary) > 1e-6) {
+        return null;
+      }
+      return `${escapeHtml(shortNumber(first.real))} &plusmn; ${escapeHtml(shortNumber(Math.abs(first.imaginary)))}&radic;&minus;1`;
+    }
+
     function formatComplexVolume(value) {
-      const formatted = String(value)
-        .replace(/`\d+(?:\.\d+)?/g, "")
+      const formatted = stripPrecision(value)
         .replace(/\s*\*\s*I\b/g, "sqrt(-1)")
         .replace(/\bI\b/g, "sqrt(-1)")
-        .replace(/-?\d+\.\d+/g, number => Number(number).toFixed(4));
+        .replace(/-?\d+\.\d+/g, number => shortNumber(number));
       return escapeHtml(formatted).replaceAll("sqrt(-1)", "&radic;&minus;1");
     }
 
-    function solutionChips(record) {
+    function matrixChip(value, component, kind) {
+      const classes = ["chip"];
+      const isPositiveDimensional = kind === "solutions" && ((component && component.positiveDimensional) || (typeof value === "number" && value < 0));
+      if (component && component.geometric) {
+        classes.push("geometric");
+      }
+      if (isPositiveDimensional) {
+        classes.push("positive-dim");
+      }
+
+      const title = isPositiveDimensional && component
+        ? `ideal ${component.index}: positive-dimensional, dimension ${component.dimension}`
+        : `ideal ${component ? component.index : "?"}`;
+      return `<span class="${classes.join(" ")}" title="${escapeHtml(title)}">${escapeHtml(value ?? "?")}</span>`;
+    }
+
+    function matrixRow(label, cells) {
+      return `
+        <div class="matrix-row">
+          <span class="matrix-label">${escapeHtml(label)}</span>
+          <span class="matrix-brace">{</span>
+          ${cells.join('<span class="matrix-comma">,</span>')}
+          <span class="matrix-brace">}</span>
+        </div>
+      `;
+    }
+
+    function idealMatrix(record) {
       if (!record.components || record.components.length === 0) {
         return '<span class="muted">none</span>';
       }
-      return record.components.map(component => {
-        const rawValue = component.solutions ?? "?";
-        const value = typeof rawValue === "number" && rawValue < 0 ? `dim ${Math.abs(rawValue)}` : rawValue;
-        const title = component.dimension > 0
-          ? `ideal ${component.index}: dimension ${component.dimension}`
-          : `ideal ${component.index}`;
-        const cls = component.geometric ? "chip geometric" : "chip";
-        return `<span class="${cls}" title="${escapeHtml(title)}">${escapeHtml(value)}</span>`;
-      }).join("");
-    }
-
-    function obstructionChips(record) {
-      if (!record.obstructions || record.obstructions.length === 0) {
-        return '<span class="muted">none</span>';
-      }
-      return record.obstructions.map((value, index) => {
-        const component = record.components[index];
-        const cls = component && component.geometric ? "chip geometric" : "chip";
-        return `<span class="${cls}" title="ideal ${index + 1}">${escapeHtml(value)}</span>`;
-      }).join("");
+      const solutions = record.components.map(component => (
+        matrixChip(component.solutions ?? "?", component, "solutions")
+      ));
+      const obstructions = record.components.map((component, index) => (
+        matrixChip(component.obstruction ?? record.obstructions?.[index] ?? "?", component, "obstructions")
+      ));
+      return `
+        <div class="ideal-matrix" title="{{numbers of solutions}, {obstructions}}">
+          ${matrixRow("N", solutions)}
+          ${matrixRow("Ob", obstructions)}
+        </div>
+      `;
     }
 
     function repoLinks(record) {
@@ -575,15 +813,16 @@
         links.push(`<a href="${escapeHtml(record.pdf)}" download>pdf</a>`);
       }
       links.push(`<a href="${escapeHtml(record.repoJson)}" download>json</a>`);
-      links.push(`<button type="button" data-view-url="${escapeHtml(record.repoJson)}" data-view-title="${escapeHtml(record.name)} repository JSON" data-view-mode="fetch">view</button>`);
+      links.push(`<button type="button" data-record-index="${record.index}" data-view-url="${escapeHtml(record.repoJson)}" data-view-title="${escapeHtml(record.name)} repository JSON" data-view-label="Repository">view</button>`);
       return links.join("");
     }
 
     function newJsonLinks(record) {
-      const url = r2Url(record);
+      const viewUrl = record.newJson || r2Url(record);
+      const downloadUrl = record.newJson || r2Url(record);
       return [
-        `<a href="${escapeHtml(url)}" download="${escapeHtml(fileName(record.repoJson))}" title="For reliable cross-origin download, set Content-Disposition: attachment on the R2 object.">json</a>`,
-        `<button type="button" data-view-url="${escapeHtml(url)}" data-view-title="${escapeHtml(record.name)} new JSON" data-view-mode="embed">view</button>`
+        `<a href="${escapeHtml(downloadUrl)}" download="${escapeHtml(fileName(downloadUrl))}">json</a>`,
+        `<button type="button" data-record-index="${record.index}" data-view-url="${escapeHtml(viewUrl)}" data-view-fallback-url="${escapeHtml(r2Url(record))}" data-view-title="${escapeHtml(record.name)} new JSON" data-view-label="New">view</button>`
       ].join("");
     }
 
@@ -594,6 +833,7 @@
         record.rawName,
         record.crossing,
         record.hyperbolic,
+        record.hasPositiveDimensionalIdeal,
         record.geometricVolume && record.geometricVolume.join(" "),
         record.solutionCounts && record.solutionCounts.join(" "),
         record.obstructions && record.obstructions.join(" ")
@@ -619,12 +859,19 @@
       const query = searchInput.value.trim().toLowerCase();
       const crossing = crossingFilter.value;
       const hyperbolic = hyperbolicFilter.value;
+      const dimension = dimensionFilter.value;
 
       filtered = records.filter(record => {
         if (crossing && String(record.crossing) !== crossing) {
           return false;
         }
         if (hyperbolic && String(record.hyperbolic) !== hyperbolic) {
+          return false;
+        }
+        if (dimension === "positive" && !record.hasPositiveDimensionalIdeal) {
+          return false;
+        }
+        if (dimension === "zero" && record.hasPositiveDimensionalIdeal) {
           return false;
         }
         return matchesQuery(record, query);
@@ -647,7 +894,7 @@
       nextPage.disabled = page >= pageCount;
 
       if (visible.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" class="empty">No knots match the current search.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="empty">No knots match the current search.</td></tr>`;
         return;
       }
 
@@ -659,11 +906,10 @@
               ? `<a href="#none" onclick="return diagramPopup('${escapeHtml(record.diagram)}')">${escapeHtml(record.name)}</a>`
               : escapeHtml(record.name)
           }</td>
-          <td>${record.hyperbolic ? "yes" : "no"}</td>
+          <td>${oxText(record.hyperbolic)}</td>
           <td class="volume">${compactVolume(record)}</td>
           <td class="number">${record.componentCount}</td>
-          <td>${solutionChips(record)}</td>
-          <td>${obstructionChips(record)}</td>
+          <td>${idealMatrix(record)}</td>
           <td class="links">${repoLinks(record)}</td>
           <td class="links">${newJsonLinks(record)}</td>
         </tr>
@@ -680,7 +926,7 @@
       const row = document.createElement("tr");
       row.id = "viewer-row";
       const cell = document.createElement("td");
-      cell.colSpan = 9;
+      cell.colSpan = 8;
       cell.appendChild(viewer);
       row.appendChild(cell);
       clickedRow.insertAdjacentElement("afterend", row);
@@ -696,11 +942,25 @@
       viewerBody.innerHTML = `<iframe class="viewer-frame" src="${escapeHtml(url)}"></iframe>`;
     }
 
+    function recordByIndex(index) {
+      return records.find(record => String(record.index) === String(index));
+    }
+
     function asArray(value) {
       if (value === undefined || value === null) {
         return [];
       }
-      return Array.isArray(value) ? value : [value];
+      if (Array.isArray(value)) {
+        return value;
+      }
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+          const inner = trimmed.slice(1, -1).trim();
+          return inner ? inner.split(",").map(item => item.trim()) : [];
+        }
+      }
+      return [value];
     }
 
     function firstAvailable(...values) {
@@ -762,16 +1022,146 @@
       }
       const dimension = ideal.IdealDimension;
       if (ideal.IsZeroDim === false && Number.isInteger(dimension) && dimension > 0) {
-        return `dim ${dimension}`;
+        return -dimension;
       }
       if (Number.isInteger(dimension) && dimension > 0) {
-        return `dim ${dimension}`;
+        return -dimension;
+      }
+      const complexVolumes = asArray(ideal.ComplexVolumeN);
+      if (complexVolumes.length) {
+        return complexVolumes.length;
       }
       if (ideal.NumberOfSols !== undefined && ideal.NumberOfSols !== null) {
         return ideal.NumberOfSols;
       }
-      const complexVolumes = asArray(ideal.ComplexVolumeN);
-      return complexVolumes.length || "?";
+      return "?";
+    }
+
+    function isPositiveDimensionalIdeal(ideal) {
+      return ideal && (ideal.IsZeroDim === false || (Number.isInteger(ideal.IdealDimension) && ideal.IdealDimension > 0));
+    }
+
+    function isAbelianIdeal(ideal) {
+      return String(ideal && ideal.IdealName || "").toLowerCase().startsWith("ab");
+    }
+
+    function isAbelianComponent(component) {
+      return Boolean(component && (component.abelian || String(component.name || "").toLowerCase().startsWith("ab")));
+    }
+
+    function displayName(name) {
+      const underscored = String(name || "").match(/^(\d+)([an])_(\d+)$/);
+      if (underscored) {
+        return `${underscored[1]}${underscored[2]}_${Number(underscored[3])}`;
+      }
+      const compact = String(name || "").match(/^(\d+)([an])(\d+)$/);
+      if (compact) {
+        return `${compact[1]}${compact[2]}_${Number(compact[3])}`;
+      }
+      return name;
+    }
+
+    function summarizeData(data, fallbackRecord) {
+      const ideals = primaryIdealsFromData(data);
+      const components = [];
+      const obstructions = [];
+      let geometricComponent = null;
+      let geometricVolume = null;
+      let hasPositiveDimensionalIdeal = false;
+
+      ideals.forEach((ideal, index) => {
+        const geometricIndices = parseGeometricIndices(ideal.GeometricComponent);
+        const positiveDimensional = isPositiveDimensionalIdeal(ideal);
+        const obstruction = ideal.Obstruction ?? "?";
+        hasPositiveDimensionalIdeal = hasPositiveDimensionalIdeal || positiveDimensional;
+
+        if (geometricIndices.length && geometricComponent === null) {
+          geometricComponent = index + 1;
+          geometricVolume = selectedComplexVolumes(ideal.ComplexVolumeN, geometricIndices).map(String);
+        }
+
+        obstructions.push(obstruction);
+        components.push({
+          index: index + 1,
+          name: ideal.IdealName,
+          solutions: componentSolutionCount(ideal),
+          dimension: ideal.IdealDimension,
+          positiveDimensional,
+          abelian: isAbelianIdeal(ideal),
+          obstruction,
+          geometric: geometricIndices.length > 0,
+          geometricIndices
+        });
+      });
+
+      const rawName = data.Name || data.RolfsenName || fallbackRecord?.rawName || fallbackRecord?.name || "-";
+      return {
+        ...(fallbackRecord || {}),
+        index: data.Index ?? fallbackRecord?.index,
+        name: displayName(rawName),
+        rawName,
+        hyperbolic: data.Hyperbolic ?? fallbackRecord?.hyperbolic,
+        determinant: fallbackRecord?.determinant ?? null,
+        geometricComponent,
+        geometricVolume,
+        componentCount: ideals.length,
+        hasPositiveDimensionalIdeal,
+        solutionCounts: components.map(component => component.solutions),
+        components,
+        obstructions
+      };
+    }
+
+    function numericValue(value) {
+      if (typeof value === "number" && Number.isFinite(value)) {
+        return value;
+      }
+      if (typeof value === "string" && /^-?\d+$/.test(value.trim())) {
+        return Number(value.trim());
+      }
+      return null;
+    }
+
+    function obstructionValue(value) {
+      if (value === 1 || value === "1" || value === "+1") {
+        return 1;
+      }
+      if (value === -1 || value === "-1") {
+        return -1;
+      }
+      return null;
+    }
+
+    function solutionStats(record) {
+      let obstructionMinus = 0;
+      let obstructionPlus = 0;
+
+      (record.components || []).forEach(component => {
+        if (isAbelianComponent(component)) {
+          return;
+        }
+        const solutions = numericValue(component.solutions);
+        const obstruction = obstructionValue(component.obstruction);
+        if (solutions === null || solutions < 0) {
+          return;
+        }
+        if (obstruction === -1) {
+          obstructionMinus += solutions;
+        } else if (obstruction === 1) {
+          obstructionPlus += solutions;
+        }
+      });
+
+      const difference = obstructionMinus - obstructionPlus;
+      const determinant = numericValue(record.determinant);
+      const determinantTarget = determinant === null ? null : (determinant - 1) / 2;
+      return { obstructionMinus, obstructionPlus, difference, determinant, determinantTarget };
+    }
+
+    function solutionCountsEqual(left, right) {
+      const leftValues = left || [];
+      const rightValues = right || [];
+      return leftValues.length === rightValues.length && leftValues.every((value, index) => String(value) === String(rightValues[index]));
     }
 
     function boolText(value) {
@@ -780,6 +1170,16 @@
       }
       if (value === false) {
         return "no";
+      }
+      return "-";
+    }
+
+    function oxText(value) {
+      if (value === true) {
+        return "O";
+      }
+      if (value === false) {
+        return "X";
       }
       return "-";
     }
@@ -798,8 +1198,13 @@
       const geometricVolumes = selectedComplexVolumes(ideal.ComplexVolumeN, geometricIndices);
       const geometric = geometricIndices.length > 0;
       const obstruction = ideal.Obstruction ?? "-";
+      const solutionCount = componentSolutionCount(ideal);
+      const solutionClasses = ["chip"];
+      if (typeof solutionCount === "number" && solutionCount < 0) {
+        solutionClasses.push("positive-dim");
+      }
       const chips = [
-        `<span class="chip">solutions ${escapeHtml(componentSolutionCount(ideal))}</span>`,
+        `<span class="${solutionClasses.join(" ")}">solutions ${escapeHtml(solutionCount)}</span>`,
         `<span class="chip">dimension ${escapeHtml(ideal.IdealDimension ?? "-")}</span>`,
         `<span class="chip">obstruction ${escapeHtml(obstruction)}</span>`
       ];
@@ -823,6 +1228,67 @@
       `;
     }
 
+    function manifestSummaryTable(record) {
+      if (!record) {
+        return "";
+      }
+      const volume = compactVolume(record);
+      return `
+        <table class="summary-table">
+          <tbody>
+            <tr><th>Index</th><td>${escapeHtml(record.index)}</td></tr>
+            <tr><th>Knot</th><td>${escapeHtml(record.name)}</td></tr>
+            <tr><th>Hyperbolic</th><td>${oxText(record.hyperbolic)}</td></tr>
+            <tr><th>Determinant</th><td>${escapeHtml(record.determinant ?? "-")}</td></tr>
+            <tr><th>Geometric complex volume</th><td class="volume">${volume}</td></tr>
+            <tr><th># ideals</th><td>${escapeHtml(record.componentCount)}</td></tr>
+            <tr><th>Positive-dimensional ideal</th><td>${oxText(record.hasPositiveDimensionalIdeal)}</td></tr>
+            <tr><th>Ideal matrix</th><td>${idealMatrix(record)}</td></tr>
+          </tbody>
+        </table>
+      `;
+    }
+
+    function determinantComparison(record) {
+      const stats = solutionStats(record);
+      const target = stats.determinantTarget;
+      const expression = target === null
+        ? "-"
+        : `${stats.obstructionMinus} - ${stats.obstructionPlus} = ${stats.difference}`;
+      return `
+        <table class="summary-table">
+          <tbody>
+            <tr><th>det(K)</th><td>${escapeHtml(stats.determinant ?? "-")}</td></tr>
+            <tr><th>(det(K)-1)/2</th><td>${escapeHtml(target ?? "-")}</td></tr>
+            <tr><th>N(-1)-N(+1), non-abelian</th><td>${escapeHtml(expression)}</td></tr>
+          </tbody>
+        </table>
+      `;
+    }
+
+    function solutionDifferenceNotice(viewRecord, manifestRecord, label) {
+      if (!manifestRecord || label !== "Repository" || solutionCountsEqual(viewRecord.solutionCounts, manifestRecord.solutionCounts)) {
+        return "";
+      }
+      return `
+        <div class="viewer-notice">
+          This repository JSON has solution counts ${escapeHtml(JSON.stringify(viewRecord.solutionCounts))};
+          the new-data manifest has ${escapeHtml(JSON.stringify(manifestRecord.solutionCounts))}.
+        </div>
+      `;
+    }
+
+    function setEmbeddedViewer(url, record, label, message = "The JSON object is shown directly below the same manifest summary table.") {
+      viewerBody.innerHTML = `
+        <div class="viewer-content">
+          ${manifestSummaryTable(record)}
+          <div class="viewer-section-title">${escapeHtml(label)} JSON</div>
+          <p class="viewer-note">${escapeHtml(message)}</p>
+          <iframe class="viewer-frame" src="${escapeHtml(url)}"></iframe>
+        </div>
+      `;
+    }
+
     function jsonTree(value, label = "root", depth = 0) {
       const key = `<span class="json-key">${escapeHtml(label)}</span>`;
       if (value === null || typeof value !== "object") {
@@ -836,7 +1302,8 @@
       return `<details${open}><summary>${key}: ${type}</summary>${children}</details>`;
     }
 
-    function setViewerData(data) {
+    function setViewerData(data, manifestRecord, label) {
+      const viewRecord = summarizeData(data, manifestRecord);
       const ideals = primaryIdealsFromData(data);
       const geometricCards = ideals
         .map((ideal, index) => ({ ideal, index: index + 1, geometric: parseGeometricIndices(ideal.GeometricComponent).length > 0 }))
@@ -844,16 +1311,20 @@
         .map(item => idealSummaryCard(item.ideal, item.index));
       const allCards = ideals.map((ideal, index) => idealSummaryCard(ideal, index + 1));
       const rawJson = JSON.stringify(data, null, 2);
+      const differenceNotice = solutionDifferenceNotice(viewRecord, manifestRecord, label);
 
       viewerBody.innerHTML = `
         <div class="viewer-content">
           <div class="viewer-tabs" role="tablist" aria-label="JSON viewer sections">
             <button class="viewer-tab" type="button" data-panel="summary" aria-selected="true">Summary</button>
             <button class="viewer-tab" type="button" data-panel="ideals" aria-selected="false">Ideals</button>
+            <button class="viewer-tab" type="button" data-panel="determinant" aria-selected="false">Determinant</button>
             <button class="viewer-tab" type="button" data-panel="tree" aria-selected="false">Tree</button>
             <button class="viewer-tab" type="button" data-panel="raw" aria-selected="false">Raw JSON</button>
           </div>
           <section class="viewer-panel" data-panel="summary">
+            ${manifestSummaryTable(viewRecord)}
+            ${differenceNotice}
             <div class="viewer-grid">
               ${viewerFact("Index", data.Index)}
               ${viewerFact("Name", data.Name || data.RolfsenName)}
@@ -868,6 +1339,13 @@
           <section class="viewer-panel" data-panel="ideals" hidden>
             <div class="viewer-list">${allCards.length ? allCards.join("") : '<span class="muted">No primary ideals found.</span>'}</div>
           </section>
+          <section class="viewer-panel" data-panel="determinant" hidden>
+            <label class="viewer-check">
+              <input type="checkbox" data-determinant-toggle checked>
+              Show determinant comparison
+            </label>
+            <div class="determinant-block">${determinantComparison(viewRecord)}</div>
+          </section>
           <section class="viewer-panel" data-panel="tree" hidden>
             <div class="json-tree">${jsonTree(data)}</div>
           </section>
@@ -877,32 +1355,24 @@
         </div>
       `;
       viewerBody.querySelector("#json-output").textContent = rawJson;
+      selectViewerPanel(activeViewerPanel);
     }
 
     function selectViewerPanel(panelName) {
+      const hasPanel = Array.from(viewerBody.querySelectorAll(".viewer-panel"))
+        .some(panel => panel.dataset.panel === panelName);
+      activeViewerPanel = hasPanel ? panelName : "summary";
       viewerBody.querySelectorAll(".viewer-tab").forEach(tab => {
-        tab.setAttribute("aria-selected", String(tab.dataset.panel === panelName));
+        tab.setAttribute("aria-selected", String(tab.dataset.panel === activeViewerPanel));
       });
       viewerBody.querySelectorAll(".viewer-panel").forEach(panel => {
-        panel.hidden = panel.dataset.panel !== panelName;
+        panel.hidden = panel.dataset.panel !== activeViewerPanel;
       });
     }
 
-    async function viewJson(url, title, button, mode) {
-      if (window.location.protocol === "file:" && !/^https?:\/\//.test(url)) {
-        window.open(url, "_blank");
-        return;
-      }
-
+    async function viewJson(url, title, button, record, label) {
       placeViewerNear(button);
       viewerTitle.textContent = title;
-
-      if (mode === "embed") {
-        setViewerFrame(url);
-        viewer.scrollIntoView({ behavior: "smooth", block: "nearest" });
-        return;
-      }
-
       setViewerPre("Loading...");
       viewer.scrollIntoView({ behavior: "smooth", block: "nearest" });
 
@@ -912,19 +1382,17 @@
           if (!response.ok) {
             throw new Error(`${response.status} ${response.statusText}`);
           }
-          const data = await response.json();
-          jsonCache.set(url, data);
+          jsonCache.set(url, await response.json());
         }
-        setViewerData(jsonCache.get(url));
+        setViewerData(jsonCache.get(url), record, label);
       } catch (error) {
-        setViewerPre([
-          "Could not load JSON inside this page.",
-          "",
-          "Open the JSON URL directly instead:",
-          url,
-          "",
-          error.message
-        ].join("\n"));
+        const fallbackUrl = button.dataset.viewFallbackUrl || url;
+        setEmbeddedViewer(
+          fallbackUrl,
+          record,
+          label,
+          `Could not parse this JSON inside the page (${error.message}). Showing the JSON object directly instead.`
+        );
       }
     }
 
@@ -958,6 +1426,7 @@
     searchInput.addEventListener("input", applyFilters);
     crossingFilter.addEventListener("change", applyFilters);
     hyperbolicFilter.addEventListener("change", applyFilters);
+    dimensionFilter.addEventListener("change", applyFilters);
     pageSizeSelect.addEventListener("change", () => {
       page = 1;
       render();
@@ -973,13 +1442,28 @@
     tbody.addEventListener("click", event => {
       const button = event.target.closest("button[data-view-url]");
       if (button) {
-        viewJson(button.dataset.viewUrl, button.dataset.viewTitle, button, button.dataset.viewMode);
+        viewJson(
+          button.dataset.viewUrl,
+          button.dataset.viewTitle,
+          button,
+          recordByIndex(button.dataset.recordIndex),
+          button.dataset.viewLabel || "Selected"
+        );
       }
     });
     viewerBody.addEventListener("click", event => {
       const tab = event.target.closest(".viewer-tab");
       if (tab) {
         selectViewerPanel(tab.dataset.panel);
+      }
+    });
+    viewerBody.addEventListener("change", event => {
+      const toggle = event.target.closest("[data-determinant-toggle]");
+      if (toggle) {
+        const block = viewerBody.querySelector(".determinant-block");
+        if (block) {
+          block.hidden = !toggle.checked;
+        }
       }
     });
     document.getElementById("close-viewer").addEventListener("click", () => {
@@ -992,7 +1476,7 @@
 
     init().catch(error => {
       resultCount.textContent = "Could not load knot data.";
-      tbody.innerHTML = `<tr><td colspan="9" class="empty">${escapeHtml(error.message)}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" class="empty">${escapeHtml(error.message)}</td></tr>`;
     });
   </script>
 </body>
