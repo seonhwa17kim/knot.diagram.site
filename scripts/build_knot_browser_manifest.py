@@ -64,11 +64,122 @@ def find_prefixed_file(directory, index, suffix):
     return rel(matches[0]) if matches else None
 
 
+def repository_json_path(source_path):
+    repo_json = ROOT / "parabolic" / "data" / "json" / source_path.name
+    if repo_json.exists():
+        return rel(repo_json)
+    return rel(source_path)
+
+
+class DisjointSet:
+    def __init__(self, values):
+        self.parent = {value: value for value in values}
+
+    def find(self, value):
+        while self.parent[value] != value:
+            self.parent[value] = self.parent[self.parent[value]]
+            value = self.parent[value]
+        return value
+
+    def union(self, left, right):
+        left_root = self.find(left)
+        right_root = self.find(right)
+        if left_root != right_root:
+            self.parent[right_root] = left_root
+
+
+def parse_pd_entry(value):
+    numbers = [int(part) for part in re.findall(r"-?\d+", str(value))]
+    return numbers if len(numbers) == 4 else None
+
+
+def pd_code_from_data(data):
+    diagram = data.get("Diagram")
+    if isinstance(diagram, dict) and isinstance(diagram.get("PDcode"), list):
+        return [entry for entry in (parse_pd_entry(item) for item in diagram["PDcode"]) if entry]
+
+    diagrams = data.get("Diagrams")
+    if isinstance(diagrams, list):
+        for item in diagrams:
+            if isinstance(item, dict) and isinstance(item.get("PDcode"), list):
+                return [entry for entry in (parse_pd_entry(code) for code in item["PDcode"]) if entry]
+    return []
+
+
+def bareiss_determinant(matrix):
+    if not matrix:
+        return 1
+
+    values = [row[:] for row in matrix]
+    size = len(values)
+    sign = 1
+    previous = 1
+
+    for pivot_index in range(size - 1):
+        pivot_row = next((row for row in range(pivot_index, size) if values[row][pivot_index]), None)
+        if pivot_row is None:
+            return 0
+        if pivot_row != pivot_index:
+            values[pivot_index], values[pivot_row] = values[pivot_row], values[pivot_index]
+            sign = -sign
+
+        pivot = values[pivot_index][pivot_index]
+        for row in range(pivot_index + 1, size):
+            for col in range(pivot_index + 1, size):
+                values[row][col] = (
+                    values[row][col] * pivot - values[row][pivot_index] * values[pivot_index][col]
+                ) // previous
+        previous = pivot
+
+        for row in range(pivot_index + 1, size):
+            values[row][pivot_index] = 0
+        for col in range(pivot_index + 1, size):
+            values[pivot_index][col] = 0
+
+    return abs(sign * values[-1][-1])
+
+
+def determinant_from_pd(pd_code):
+    if not pd_code:
+        return None
+
+    labels = sorted({label for crossing in pd_code for label in crossing})
+    over_pair = (0, 2)
+    under_positions = [1, 3]
+    disjoint_set = DisjointSet(labels)
+
+    for crossing in pd_code:
+        disjoint_set.union(crossing[over_pair[0]], crossing[over_pair[1]])
+
+    roots = sorted({disjoint_set.find(label) for label in labels})
+    root_index = {root: index for index, root in enumerate(roots)}
+    matrix = []
+    for crossing in pd_code:
+        row = [0] * len(roots)
+        over_index = root_index[disjoint_set.find(crossing[over_pair[0]])]
+        row[over_index] += 2
+        for position in under_positions:
+            row[root_index[disjoint_set.find(crossing[position])]] -= 1
+        matrix.append(row)
+
+    if len(matrix) < 2 or len(roots) < 2:
+        return 1
+    cofactor = [row[1:] for row in matrix[1:]]
+    return bareiss_determinant(cofactor)
+
+
 def as_list(value):
     if value is None:
         return []
     if isinstance(value, list):
         return value
+    if isinstance(value, str):
+        stripped = value.strip()
+        if stripped.startswith("{") and stripped.endswith("}"):
+            inner = stripped[1:-1].strip()
+            if not inner:
+                return []
+            return [part.strip() for part in inner.split(",")]
     return [value]
 
 
@@ -147,15 +258,22 @@ def component_solution_count(ideal):
         if isinstance(dimension, int) and dimension > 0:
             return -dimension
 
-    number_of_sols = ideal.get("NumberOfSols")
-    if number_of_sols is not None:
-        return number_of_sols
-
     complex_volumes = as_list(ideal.get("ComplexVolumeN"))
     if complex_volumes:
         return len(complex_volumes)
 
+    number_of_sols = ideal.get("NumberOfSols")
+    if number_of_sols is not None:
+        return number_of_sols
+
     return None
+
+
+def has_positive_dimension(ideal):
+    if ideal.get("IsZeroDim") is False:
+        return True
+    dimension = ideal.get("IdealDimension")
+    return isinstance(dimension, int) and dimension > 0
 
 
 def first_available(*values):
@@ -171,6 +289,7 @@ def summarize_json(path, r2_prefix):
     raw_name = str(data.get("Name") or data.get("RolfsenName") or path.stem)
     name = display_name(raw_name)
     crossing = crossing_number(name)
+    determinant = determinant_from_pd(pd_code_from_data(data))
 
     diagram = data.get("Diagram", {})
     parabolic_reps = first_available(
@@ -183,10 +302,13 @@ def summarize_json(path, r2_prefix):
     geometric_index = None
     geometric_volume = None
     obstructions = []
+    has_positive_dimensional_ideal = False
 
     for idx, ideal in enumerate(primary_ideals, start=1):
         geometric_indices = parse_geometric_indices(ideal.get("GeometricComponent"))
         geometric = bool(geometric_indices)
+        positive_dimensional = has_positive_dimension(ideal)
+        has_positive_dimensional_ideal = has_positive_dimensional_ideal or positive_dimensional
         if geometric and geometric_index is None:
             geometric_index = idx
             geometric_volume = selected_complex_volumes(ideal.get("ComplexVolumeN"), geometric_indices)
@@ -200,6 +322,7 @@ def summarize_json(path, r2_prefix):
                 "name": ideal.get("IdealName"),
                 "solutions": component_solution_count(ideal),
                 "dimension": ideal.get("IdealDimension"),
+                "positiveDimensional": positive_dimensional,
                 "obstruction": obstruction,
                 "geometric": geometric,
                 "geometricIndices": geometric_indices,
@@ -218,13 +341,16 @@ def summarize_json(path, r2_prefix):
         "geometricComponent": geometric_index,
         "geometricVolume": geometric_volume,
         "componentCount": len(primary_ideals),
+        "hasPositiveDimensionalIdeal": has_positive_dimensional_ideal,
+        "determinant": determinant,
         "solutionCounts": [component["solutions"] for component in components],
         "components": components,
         "obstructions": obstructions,
         "diagram": diagram_path,
         "html": html_path,
         "pdf": pdf_path,
-        "repoJson": rel(path),
+        "repoJson": repository_json_path(path),
+        "newJson": rel(path),
         "newJsonKey": f"{r2_prefix}/{path.name}",
     }
 
