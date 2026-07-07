@@ -812,17 +812,17 @@
       if (record.pdf) {
         links.push(`<a href="${escapeHtml(record.pdf)}" download>pdf</a>`);
       }
-      links.push(`<a href="${escapeHtml(record.repoJson)}" download>json</a>`);
+      links.push(`<a href="${escapeHtml(record.repoJson)}" download="${escapeHtml(fileName(record.repoJson))}" data-download-url="${escapeHtml(record.repoJson)}" data-download-name="${escapeHtml(fileName(record.repoJson))}">json</a>`);
       links.push(`<button type="button" data-record-index="${record.index}" data-view-url="${escapeHtml(record.repoJson)}" data-view-title="${escapeHtml(record.name)} repository JSON" data-view-label="Repository">view</button>`);
       return links.join("");
     }
 
     function newJsonLinks(record) {
-      const viewUrl = record.newJson || r2Url(record);
-      const downloadUrl = record.newJson || r2Url(record);
+      const viewUrl = r2Url(record);
+      const downloadUrl = r2Url(record);
       return [
-        `<a href="${escapeHtml(downloadUrl)}" download="${escapeHtml(fileName(downloadUrl))}">json</a>`,
-        `<button type="button" data-record-index="${record.index}" data-view-url="${escapeHtml(viewUrl)}" data-view-fallback-url="${escapeHtml(r2Url(record))}" data-view-title="${escapeHtml(record.name)} new JSON" data-view-label="New">view</button>`
+        `<a href="${escapeHtml(downloadUrl)}" download="${escapeHtml(fileName(downloadUrl))}" data-download-url="${escapeHtml(downloadUrl)}" data-download-name="${escapeHtml(fileName(downloadUrl))}">json</a>`,
+        `<button type="button" data-record-index="${record.index}" data-view-url="${escapeHtml(viewUrl)}" data-view-fallback-url="${escapeHtml(viewUrl)}" data-view-title="${escapeHtml(record.name)} new JSON" data-view-label="New">view</button>`
       ].join("");
     }
 
@@ -1278,15 +1278,67 @@
       `;
     }
 
-    function setEmbeddedViewer(url, record, label, message = "The JSON object is shown directly below the same manifest summary table.") {
-      viewerBody.innerHTML = `
-        <div class="viewer-content">
-          ${manifestSummaryTable(record)}
-          <div class="viewer-section-title">${escapeHtml(label)} JSON</div>
-          <p class="viewer-note">${escapeHtml(message)}</p>
-          <iframe class="viewer-frame" src="${escapeHtml(url)}"></iframe>
+    function componentSummaryCard(component) {
+      const chips = [
+        `<span class="chip">solutions ${escapeHtml(component.solutions ?? "-")}</span>`,
+        `<span class="chip">dimension ${escapeHtml(component.dimension ?? "-")}</span>`,
+        `<span class="chip">obstruction ${escapeHtml(component.obstruction ?? "-")}</span>`
+      ];
+      if (component.abelian) {
+        chips.push('<span class="chip">abelian</span>');
+      }
+      if (component.geometric) {
+        chips.push(`<span class="chip geometric">geometric ${escapeHtml((component.geometricIndices || []).join(", ") || "O")}</span>`);
+      }
+      if (component.positiveDimensional) {
+        chips.push('<span class="chip positive-dim">positive-dimensional</span>');
+      }
+
+      return `
+        <div class="ideal-card${component.geometric ? " geometric" : ""}">
+          <div class="ideal-head">
+            <span>${escapeHtml(component.name || `Ideal ${component.index}`)}</span>
+            <span class="muted">#${escapeHtml(component.index ?? "-")}</span>
+          </div>
+          <div class="ideal-meta">${chips.join("")}</div>
         </div>
       `;
+    }
+
+    function setEmbeddedViewer(url, record, label, message = "The JSON object is shown directly below the same manifest summary table.") {
+      const componentCards = (record && record.components || []).map(componentSummaryCard);
+      viewerBody.innerHTML = `
+        <div class="viewer-content">
+          <div class="viewer-tabs" role="tablist" aria-label="JSON viewer sections">
+            <button class="viewer-tab" type="button" data-panel="summary" aria-selected="true">Summary</button>
+            <button class="viewer-tab" type="button" data-panel="ideals" aria-selected="false">Ideals</button>
+            <button class="viewer-tab" type="button" data-panel="determinant" aria-selected="false">Determinant</button>
+            <button class="viewer-tab" type="button" data-panel="tree" aria-selected="false">Tree</button>
+            <button class="viewer-tab" type="button" data-panel="raw" aria-selected="false">Raw JSON</button>
+          </div>
+          <section class="viewer-panel" data-panel="summary">
+            ${manifestSummaryTable(record)}
+            <p class="viewer-note">${escapeHtml(message)}</p>
+          </section>
+          <section class="viewer-panel" data-panel="ideals" hidden>
+            <div class="viewer-list">${componentCards.length ? componentCards.join("") : '<span class="muted">No component summary found.</span>'}</div>
+          </section>
+          <section class="viewer-panel" data-panel="determinant" hidden>
+            <label class="viewer-check">
+              <input type="checkbox" data-determinant-toggle checked>
+              Show determinant comparison
+            </label>
+            <div class="determinant-block">${determinantComparison(record)}</div>
+          </section>
+          <section class="viewer-panel" data-panel="tree" hidden>
+            <p class="viewer-note">The structured tree is unavailable because the browser could not fetch this JSON object.</p>
+          </section>
+          <section class="viewer-panel" data-panel="raw" hidden>
+            <iframe class="viewer-frame" src="${escapeHtml(url)}"></iframe>
+          </section>
+        </div>
+      `;
+      selectViewerPanel(activeViewerPanel);
     }
 
     function jsonTree(value, label = "root", depth = 0) {
@@ -1396,6 +1448,26 @@
       }
     }
 
+    async function downloadJson(url, filename) {
+      try {
+        const response = await fetch(url, { cache: "force-cache" });
+        if (!response.ok) {
+          throw new Error(`${response.status} ${response.statusText}`);
+        }
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = objectUrl;
+        link.download = filename || fileName(url) || "knot-data.json";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+      } catch (error) {
+        window.location.href = url;
+      }
+    }
+
     function diagramPopup(url) {
       const img = new Image();
       img.src = url;
@@ -1440,6 +1512,13 @@
       render();
     });
     tbody.addEventListener("click", event => {
+      const downloadLink = event.target.closest("a[data-download-url]");
+      if (downloadLink) {
+        event.preventDefault();
+        downloadJson(downloadLink.dataset.downloadUrl, downloadLink.dataset.downloadName);
+        return;
+      }
+
       const button = event.target.closest("button[data-view-url]");
       if (button) {
         viewJson(
