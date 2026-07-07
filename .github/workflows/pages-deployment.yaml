@@ -21,13 +21,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Hide workflow files from Pages upload
-        run: mv .github "$RUNNER_TEMP/github-workflows"
+      - name: Prepare Pages upload directory
+        run: |
+          deploy_dir="$RUNNER_TEMP/pages-deploy"
+          mkdir -p "$deploy_dir"
+          rsync -a --delete \
+            --exclude=".git" \
+            --exclude=".github" \
+            --exclude="reports" \
+            ./ "$deploy_dir"/
 
       - name: Deploy
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy . --project-name=knot-diagram-site --branch=main
+          command: pages deploy ${{ runner.temp }}/pages-deploy --project-name=knot-diagram-site --branch=main
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
