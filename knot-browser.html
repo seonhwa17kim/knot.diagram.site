@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Knot Data Browser</title>
+  <link rel="stylesheet" href="assets/vendor/jsoneditor/jsoneditor.min.css">
   <style>
     :root {
       color-scheme: light;
@@ -127,7 +128,7 @@
       background: var(--panel);
     }
 
-    table {
+    .results-table {
       width: 100%;
       min-width: 1450px;
       border-collapse: separate;
@@ -144,15 +145,15 @@
     col.col-repo { width: 175px; }
     col.col-new { width: 163px; }
 
-    th,
-    td {
+    .results-table > thead > tr > th,
+    .results-table > tbody > tr > td {
       border-bottom: 1px solid var(--line);
       padding: 9px 10px;
       text-align: left;
       vertical-align: top;
     }
 
-    th {
+    .results-table > thead > tr > th {
       position: sticky;
       top: 0;
       z-index: 1;
@@ -164,28 +165,28 @@
       white-space: nowrap;
     }
 
-    .table-wrap th:nth-child(1),
-    .table-wrap td:nth-child(1) {
+    .results-table > thead > tr > th:nth-child(1),
+    .results-table > tbody > tr > td:nth-child(1) {
       text-align: right;
     }
 
-    .table-wrap th:nth-child(3),
-    .table-wrap td:nth-child(3),
-    .table-wrap th:nth-child(5),
-    .table-wrap td:nth-child(5),
-    .table-wrap th:nth-child(7),
-    .table-wrap td:nth-child(7),
-    .table-wrap th:nth-child(8),
-    .table-wrap td:nth-child(8) {
+    .results-table > thead > tr > th:nth-child(3),
+    .results-table > tbody > tr > td:nth-child(3),
+    .results-table > thead > tr > th:nth-child(5),
+    .results-table > tbody > tr > td:nth-child(5),
+    .results-table > thead > tr > th:nth-child(7),
+    .results-table > tbody > tr > td:nth-child(7),
+    .results-table > thead > tr > th:nth-child(8),
+    .results-table > tbody > tr > td:nth-child(8) {
       text-align: center;
     }
 
-    .table-wrap th:nth-child(2),
-    .table-wrap td:nth-child(2),
-    .table-wrap th:nth-child(4),
-    .table-wrap td:nth-child(4),
-    .table-wrap th:nth-child(6),
-    .table-wrap td:nth-child(6) {
+    .results-table > thead > tr > th:nth-child(2),
+    .results-table > tbody > tr > td:nth-child(2),
+    .results-table > thead > tr > th:nth-child(4),
+    .results-table > tbody > tr > td:nth-child(4),
+    .results-table > thead > tr > th:nth-child(6),
+    .results-table > tbody > tr > td:nth-child(6) {
       text-align: left;
     }
 
@@ -193,11 +194,11 @@
       text-align: left;
     }
 
-    tbody tr:nth-child(even) {
+    .results-table > tbody > tr.data-row:nth-child(even) {
       background: #fbfcfd;
     }
 
-    tbody tr:hover {
+    .results-table > tbody > tr.data-row:hover {
       background: #eef6ff;
     }
 
@@ -517,6 +518,54 @@
       color: #5a3212;
     }
 
+    .json-editor {
+      height: 520px;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .json-editor .jsoneditor {
+      border: 0;
+    }
+
+    .json-editor table {
+      width: auto;
+      min-width: 0;
+      table-layout: auto;
+    }
+
+    .json-editor th,
+    .json-editor td {
+      border-bottom: 0;
+      padding: 0;
+      vertical-align: middle;
+    }
+
+    .json-editor tr:has(.jsoneditor-button.jsoneditor-expanded) .jsoneditor-field,
+    .json-editor tr:has(.jsoneditor-button.jsoneditor-collapsed) .jsoneditor-field,
+    .json-editor tr:has(.jsoneditor-button.jsoneditor-expanded) .jsoneditor-readonly,
+    .json-editor tr:has(.jsoneditor-button.jsoneditor-collapsed) .jsoneditor-readonly {
+      cursor: pointer;
+    }
+
+    .json-editor tr:has(.jsoneditor-button.jsoneditor-expanded) .jsoneditor-field:hover,
+    .json-editor tr:has(.jsoneditor-button.jsoneditor-collapsed) .jsoneditor-field:hover,
+    .json-editor tr:has(.jsoneditor-button.jsoneditor-expanded) .jsoneditor-readonly:hover,
+    .json-editor tr:has(.jsoneditor-button.jsoneditor-collapsed) .jsoneditor-readonly:hover {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+
+    .json-editor .jsoneditor-menu {
+      background: #f1f4f7;
+      border-bottom-color: var(--line);
+    }
+
+    .json-editor .jsoneditor-navigation-bar {
+      border-bottom-color: var(--line);
+      color: var(--muted);
+    }
+
     pre {
       margin: 0;
       max-height: 520px;
@@ -608,7 +657,7 @@
     </div>
 
     <div class="table-wrap">
-      <table>
+      <table class="results-table">
         <colgroup>
           <col class="col-index">
           <col class="col-knot">
@@ -646,6 +695,7 @@
     </section>
   </main>
 
+  <script src="assets/vendor/jsoneditor/jsoneditor-minimalist.min.js"></script>
   <script>
     const MANIFEST_URL = "parabolic/data/knot-browser-manifest.json";
     const R2_BASE_URL = "https://data.diagram.site/";
@@ -655,6 +705,10 @@
     let page = 1;
     const jsonCache = new Map();
     let activeViewerPanel = "summary";
+    let rawJsonEditor = null;
+    let rawJsonData = null;
+    let rawJsonText = "";
+    let rawJsonViewerRendered = false;
 
     const searchInput = document.getElementById("search");
     const crossingFilter = document.getElementById("crossing-filter");
@@ -940,11 +994,17 @@
     }
 
     function setViewerPre(text) {
+      clearRawJsonEditor();
+      rawJsonData = null;
+      rawJsonText = "";
       viewerBody.innerHTML = '<pre id="json-output"></pre>';
       viewerBody.querySelector("pre").textContent = text;
     }
 
     function setViewerFrame(url) {
+      clearRawJsonEditor();
+      rawJsonData = null;
+      rawJsonText = "";
       viewerBody.innerHTML = `<iframe class="viewer-frame" src="${escapeHtml(url)}"></iframe>`;
     }
 
@@ -1312,6 +1372,162 @@
       `;
     }
 
+    function clearRawJsonEditor() {
+      if (rawJsonEditor && typeof rawJsonEditor.destroy === "function") {
+        rawJsonEditor.destroy();
+      }
+      rawJsonEditor = null;
+      rawJsonViewerRendered = false;
+    }
+
+    function prepareRawJsonViewer(data, rawJson) {
+      clearRawJsonEditor();
+      rawJsonData = data;
+      rawJsonText = rawJson;
+    }
+
+    function renderRawJsonViewer() {
+      if (rawJsonViewerRendered) {
+        return;
+      }
+      const editorContainer = viewerBody.querySelector("[data-json-editor]");
+      const fallback = viewerBody.querySelector("#json-output");
+      if (!editorContainer || rawJsonData === null) {
+        return;
+      }
+
+      if (window.JSONEditor) {
+        rawJsonEditor = new JSONEditor(editorContainer, {
+          mode: "view",
+          mainMenuBar: true,
+          navigationBar: false,
+          statusBar: false
+        }, rawJsonData);
+        if (fallback) {
+          fallback.hidden = true;
+        }
+        installRawJsonKeyToggles(editorContainer);
+        setTimeout(() => autoExpandSingletonLists(editorContainer), 0);
+        rawJsonViewerRendered = true;
+        return;
+      }
+
+      editorContainer.hidden = true;
+      if (fallback) {
+        fallback.hidden = false;
+        fallback.textContent = rawJsonText;
+      }
+      rawJsonViewerRendered = true;
+    }
+
+    function installRawJsonKeyToggles(editorContainer) {
+      editorContainer.addEventListener("click", event => {
+        const target = event.target instanceof Element ? event.target : event.target.parentElement;
+        const field = target && target.closest(".jsoneditor-field, .jsoneditor-readonly");
+        if (!field || !editorContainer.contains(field)) {
+          return;
+        }
+
+        const row = field.closest("tr");
+        const toggle = row && row.querySelector(".jsoneditor-button.jsoneditor-expanded, .jsoneditor-button.jsoneditor-collapsed");
+        if (!toggle) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        toggle.click();
+        setTimeout(() => autoExpandSingletonLists(editorContainer), 0);
+      });
+    }
+
+    function jsonEditorLineRows(editorContainer) {
+      return Array.from(editorContainer.querySelectorAll("tr"))
+        .filter(row => row.querySelector(":scope > td.jsoneditor-tree > .jsoneditor-button"));
+    }
+
+    function jsonEditorRowButton(row) {
+      return row.querySelector(":scope > td.jsoneditor-tree > .jsoneditor-button");
+    }
+
+    function jsonEditorRowLabel(row) {
+      return row.querySelector(":scope > td.jsoneditor-tree > .jsoneditor-field, :scope > td.jsoneditor-tree > .jsoneditor-readonly");
+    }
+
+    function jsonEditorRowValue(row) {
+      return row.querySelector(":scope > td.jsoneditor-tree > .jsoneditor-value");
+    }
+
+    function jsonEditorRowIndent(row) {
+      const table = row.closest("table.jsoneditor-values");
+      if (!table) {
+        return 0;
+      }
+      return Number.parseFloat(table.style.marginLeft || getComputedStyle(table).marginLeft) || 0;
+    }
+
+    function isCollapsedSingletonArrayRow(row) {
+      const button = jsonEditorRowButton(row);
+      const value = jsonEditorRowValue(row);
+      return Boolean(
+        button
+        && button.classList.contains("jsoneditor-collapsed")
+        && value
+        && value.classList.contains("jsoneditor-array")
+        && value.textContent.trim() === "[1]"
+      );
+    }
+
+    function expandSingletonArrayFirstEntry(editorContainer, arrayRow, arrayIndent) {
+      const rows = jsonEditorLineRows(editorContainer);
+      const startIndex = rows.indexOf(arrayRow);
+      if (startIndex < 0) {
+        return false;
+      }
+
+      for (let index = startIndex + 1; index < rows.length; index += 1) {
+        const row = rows[index];
+        const indent = jsonEditorRowIndent(row);
+        if (indent <= arrayIndent) {
+          return false;
+        }
+        if (indent !== arrayIndent + 24) {
+          continue;
+        }
+
+        const label = jsonEditorRowLabel(row);
+        const button = jsonEditorRowButton(row);
+        if (!label || label.textContent.trim() !== "0") {
+          return false;
+        }
+        if (button && button.classList.contains("jsoneditor-collapsed")) {
+          button.click();
+          return true;
+        }
+        return false;
+      }
+      return false;
+    }
+
+    function autoExpandSingletonLists(editorContainer) {
+      let changed = true;
+      let guard = 0;
+      while (changed && guard < 30) {
+        changed = false;
+        guard += 1;
+        const singletonRow = jsonEditorLineRows(editorContainer).find(isCollapsedSingletonArrayRow);
+        if (singletonRow) {
+          const arrayIndent = jsonEditorRowIndent(singletonRow);
+          const button = jsonEditorRowButton(singletonRow);
+          button.click();
+          changed = true;
+          if (expandSingletonArrayFirstEntry(editorContainer, singletonRow, arrayIndent)) {
+            changed = true;
+          }
+        }
+      }
+    }
+
     function setEmbeddedViewer(url, record, label, message = "The JSON object is shown directly below the same manifest summary table.") {
       const componentCards = (record && record.components || []).map(componentSummaryCard);
       viewerBody.innerHTML = `
@@ -1401,11 +1617,12 @@
             <div class="json-tree">${jsonTree(data)}</div>
           </section>
           <section class="viewer-panel" data-panel="raw" hidden>
-            <pre id="json-output"></pre>
+            <div class="json-editor" data-json-editor></div>
+            <pre id="json-output" hidden></pre>
           </section>
         </div>
       `;
-      viewerBody.querySelector("#json-output").textContent = rawJson;
+      prepareRawJsonViewer(data, rawJson);
       selectViewerPanel(activeViewerPanel);
     }
 
@@ -1419,6 +1636,9 @@
       viewerBody.querySelectorAll(".viewer-panel").forEach(panel => {
         panel.hidden = panel.dataset.panel !== activeViewerPanel;
       });
+      if (activeViewerPanel === "raw") {
+        renderRawJsonViewer();
+      }
     }
 
     async function viewJson(url, title, button, record, label) {
@@ -1536,6 +1756,9 @@
       }
     });
     document.getElementById("close-viewer").addEventListener("click", () => {
+      clearRawJsonEditor();
+      rawJsonData = null;
+      rawJsonText = "";
       viewer.hidden = true;
       const oldRow = document.getElementById("viewer-row");
       if (oldRow) {
