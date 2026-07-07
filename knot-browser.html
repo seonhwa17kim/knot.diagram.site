@@ -1,0 +1,663 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Knot Data Browser</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --line: #cfd5de;
+      --line-strong: #8792a2;
+      --text: #1c232d;
+      --muted: #657185;
+      --accent: #205b8f;
+      --accent-soft: #e5f0fa;
+      --good: #0f6f4f;
+      --warn: #885700;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 15px;
+      line-height: 1.45;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--line);
+      padding: 20px 24px 18px;
+    }
+
+    header h1 {
+      margin: 0 0 8px;
+      font-size: 24px;
+      font-weight: 650;
+      letter-spacing: 0;
+    }
+
+    .topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .subtle {
+      color: var(--muted);
+      margin: 0;
+    }
+
+    main {
+      padding: 18px 24px 28px;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) auto auto auto;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    input,
+    select,
+    button {
+      font: inherit;
+    }
+
+    input,
+    select {
+      height: 40px;
+      border: 1px solid var(--line-strong);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--text);
+      padding: 0 10px;
+      min-width: 0;
+    }
+
+    button {
+      min-height: 32px;
+      border: 1px solid var(--line-strong);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--text);
+      cursor: pointer;
+      padding: 5px 10px;
+    }
+
+    button:hover {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+    }
+
+    .statusbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      color: var(--muted);
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--line);
+      background: var(--panel);
+    }
+
+    table {
+      width: 100%;
+      min-width: 1240px;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 9px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #e8ecf1;
+      border-bottom: 2px solid var(--line-strong);
+      font-size: 13px;
+      font-weight: 650;
+      color: #26313f;
+      white-space: nowrap;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #fbfcfd;
+    }
+
+    tbody tr:hover {
+      background: #eef6ff;
+    }
+
+    .number {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .name-cell {
+      white-space: nowrap;
+      font-weight: 600;
+    }
+
+    .chip {
+      display: inline-block;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 1px 7px;
+      margin: 0 4px 4px 0;
+      background: #fff;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .chip.geometric {
+      border-color: var(--good);
+      background: #e7f5ef;
+      color: #084b34;
+      font-weight: 700;
+    }
+
+    .links {
+      white-space: nowrap;
+    }
+
+    .links a,
+    .links button {
+      margin-right: 6px;
+      margin-bottom: 4px;
+    }
+
+    .links button {
+      color: var(--accent);
+      border-color: var(--line);
+      background: #fff;
+    }
+
+    .volume {
+      max-width: 210px;
+      color: #313b49;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .viewer {
+      margin: 8px 0;
+      border: 1px solid var(--line);
+      background: var(--panel);
+    }
+
+    .viewer-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      padding: 10px 12px;
+      flex-wrap: wrap;
+    }
+
+    .viewer-title {
+      font-weight: 650;
+    }
+
+    pre {
+      margin: 0;
+      max-height: 520px;
+      overflow: auto;
+      padding: 14px;
+      background: #111820;
+      color: #e7eef7;
+      font-size: 13px;
+      line-height: 1.45;
+      tab-size: 2;
+    }
+
+    .viewer-frame {
+      display: block;
+      width: 100%;
+      height: 520px;
+      border: 0;
+      background: #fff;
+    }
+
+    .empty {
+      padding: 24px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 760px) {
+      header,
+      main {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="topline">
+      <div>
+        <h1>Knot Data Browser</h1>
+        <p class="subtle">Boundary parabolic representation data for knots up to 13 crossings.</p>
+      </div>
+      <a href="./index.html">Back to original table</a>
+    </div>
+  </header>
+
+  <main>
+    <div class="toolbar">
+      <input id="search" type="search" placeholder="Search by crossing, name, index, obstruction, or volume" autofocus>
+      <select id="crossing-filter" aria-label="Crossing filter">
+        <option value="">All crossings</option>
+      </select>
+      <select id="hyperbolic-filter" aria-label="Hyperbolicity filter">
+        <option value="">All types</option>
+        <option value="true">Hyperbolic</option>
+        <option value="false">Non-hyperbolic</option>
+      </select>
+      <select id="page-size" aria-label="Rows per page">
+        <option value="50">50 rows</option>
+        <option value="100" selected>100 rows</option>
+        <option value="250">250 rows</option>
+        <option value="100000">All rows</option>
+      </select>
+    </div>
+
+    <div class="statusbar">
+      <div id="result-count">Loading data...</div>
+      <div>
+        <button id="prev-page" type="button">Previous</button>
+        <span id="page-label" class="muted"></span>
+        <button id="next-page" type="button">Next</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Index</th>
+            <th>Knot</th>
+            <th>Hyp.</th>
+            <th>Geometric complex volume</th>
+            <th># ideals</th>
+            <th>Solutions by ideal</th>
+            <th>Obstructions</th>
+            <th>Repository data</th>
+            <th>New JSON</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+
+    <section class="viewer" id="viewer" hidden>
+      <div class="viewer-head">
+        <span class="viewer-title" id="viewer-title">JSON viewer</span>
+        <button id="close-viewer" type="button">Close</button>
+      </div>
+      <div id="viewer-body">
+        <pre id="json-output"></pre>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const MANIFEST_URL = "parabolic/data/knot-browser-manifest.json";
+    const R2_BASE_URL = "https://pub-1e0df66310b5459ab9a8bfd35e3a1505.r2.dev/";
+
+    let records = [];
+    let filtered = [];
+    let page = 1;
+    const jsonCache = new Map();
+
+    const searchInput = document.getElementById("search");
+    const crossingFilter = document.getElementById("crossing-filter");
+    const hyperbolicFilter = document.getElementById("hyperbolic-filter");
+    const pageSizeSelect = document.getElementById("page-size");
+    const resultCount = document.getElementById("result-count");
+    const pageLabel = document.getElementById("page-label");
+    const prevPage = document.getElementById("prev-page");
+    const nextPage = document.getElementById("next-page");
+    const tbody = document.getElementById("rows");
+    const viewer = document.getElementById("viewer");
+    const viewerTitle = document.getElementById("viewer-title");
+    const viewerBody = document.getElementById("viewer-body");
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function fileName(path) {
+      return String(path || "").split("/").pop();
+    }
+
+    function r2Url(record) {
+      const parts = String(record.newJsonKey || "").split("/");
+      return R2_BASE_URL + parts.map(part => encodeURIComponent(part)).join("/");
+    }
+
+    function compactVolume(values) {
+      if (!values || values.length === 0) {
+        return '<span class="muted">none marked</span>';
+      }
+      return values.map(value => formatComplexVolume(value)).join("<br>");
+    }
+
+    function formatComplexVolume(value) {
+      const formatted = String(value)
+        .replace(/`\d+(?:\.\d+)?/g, "")
+        .replace(/\s*\*\s*I\b/g, "sqrt(-1)")
+        .replace(/\bI\b/g, "sqrt(-1)")
+        .replace(/-?\d+\.\d+/g, number => Number(number).toFixed(4));
+      return escapeHtml(formatted).replaceAll("sqrt(-1)", "&radic;&minus;1");
+    }
+
+    function solutionChips(record) {
+      if (!record.components || record.components.length === 0) {
+        return '<span class="muted">none</span>';
+      }
+      return record.components.map(component => {
+        const rawValue = component.solutions ?? "?";
+        const value = typeof rawValue === "number" && rawValue < 0 ? `dim ${Math.abs(rawValue)}` : rawValue;
+        const title = component.dimension > 0
+          ? `ideal ${component.index}: dimension ${component.dimension}`
+          : `ideal ${component.index}`;
+        const cls = component.geometric ? "chip geometric" : "chip";
+        return `<span class="${cls}" title="${escapeHtml(title)}">${escapeHtml(value)}</span>`;
+      }).join("");
+    }
+
+    function obstructionChips(record) {
+      if (!record.obstructions || record.obstructions.length === 0) {
+        return '<span class="muted">none</span>';
+      }
+      return record.obstructions.map((value, index) => {
+        const component = record.components[index];
+        const cls = component && component.geometric ? "chip geometric" : "chip";
+        return `<span class="${cls}" title="ideal ${index + 1}">${escapeHtml(value)}</span>`;
+      }).join("");
+    }
+
+    function repoLinks(record) {
+      const links = [];
+      if (record.html) {
+        links.push(`<a href="${escapeHtml(record.html)}">html</a>`);
+      }
+      if (record.pdf) {
+        links.push(`<a href="${escapeHtml(record.pdf)}" download>pdf</a>`);
+      }
+      links.push(`<a href="${escapeHtml(record.repoJson)}" download>json</a>`);
+      links.push(`<button type="button" data-view-url="${escapeHtml(record.repoJson)}" data-view-title="${escapeHtml(record.name)} repository JSON" data-view-mode="fetch">view</button>`);
+      return links.join("");
+    }
+
+    function newJsonLinks(record) {
+      const url = r2Url(record);
+      return [
+        `<a href="${escapeHtml(url)}" download="${escapeHtml(fileName(record.repoJson))}" title="For reliable cross-origin download, set Content-Disposition: attachment on the R2 object.">json</a>`,
+        `<button type="button" data-view-url="${escapeHtml(url)}" data-view-title="${escapeHtml(record.name)} new JSON" data-view-mode="embed">view</button>`
+      ].join("");
+    }
+
+    function searchableText(record) {
+      return [
+        record.index,
+        record.name,
+        record.rawName,
+        record.crossing,
+        record.hyperbolic,
+        record.geometricVolume && record.geometricVolume.join(" "),
+        record.solutionCounts && record.solutionCounts.join(" "),
+        record.obstructions && record.obstructions.join(" ")
+      ].join(" ").toLowerCase();
+    }
+
+    function matchesQuery(record, query) {
+      if (!query) {
+        return true;
+      }
+
+      if (/^\d+$/.test(query)) {
+        const numeric = Number(query);
+        if (numeric >= 3 && numeric <= 13) {
+          return record.crossing === numeric;
+        }
+      }
+
+      return searchableText(record).includes(query);
+    }
+
+    function applyFilters() {
+      const query = searchInput.value.trim().toLowerCase();
+      const crossing = crossingFilter.value;
+      const hyperbolic = hyperbolicFilter.value;
+
+      filtered = records.filter(record => {
+        if (crossing && String(record.crossing) !== crossing) {
+          return false;
+        }
+        if (hyperbolic && String(record.hyperbolic) !== hyperbolic) {
+          return false;
+        }
+        return matchesQuery(record, query);
+      });
+
+      page = 1;
+      render();
+    }
+
+    function render() {
+      const pageSize = Number(pageSizeSelect.value);
+      const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+      page = Math.min(page, pageCount);
+      const start = (page - 1) * pageSize;
+      const visible = filtered.slice(start, start + pageSize);
+
+      resultCount.textContent = `${filtered.length} of ${records.length} knots`;
+      pageLabel.textContent = `Page ${page} / ${pageCount}`;
+      prevPage.disabled = page <= 1;
+      nextPage.disabled = page >= pageCount;
+
+      if (visible.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="empty">No knots match the current search.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = visible.map(record => `
+        <tr class="data-row">
+          <td class="number">${record.index}</td>
+          <td class="name-cell">${
+            record.diagram
+              ? `<a href="#none" onclick="return diagramPopup('${escapeHtml(record.diagram)}')">${escapeHtml(record.name)}</a>`
+              : escapeHtml(record.name)
+          }</td>
+          <td>${record.hyperbolic ? "yes" : "no"}</td>
+          <td class="volume">${compactVolume(record.geometricVolume)}</td>
+          <td class="number">${record.componentCount}</td>
+          <td>${solutionChips(record)}</td>
+          <td>${obstructionChips(record)}</td>
+          <td class="links">${repoLinks(record)}</td>
+          <td class="links">${newJsonLinks(record)}</td>
+        </tr>
+      `).join("");
+    }
+
+    function placeViewerNear(button) {
+      const oldRow = document.getElementById("viewer-row");
+      if (oldRow) {
+        oldRow.remove();
+      }
+
+      const clickedRow = button.closest("tr");
+      const row = document.createElement("tr");
+      row.id = "viewer-row";
+      const cell = document.createElement("td");
+      cell.colSpan = 9;
+      cell.appendChild(viewer);
+      row.appendChild(cell);
+      clickedRow.insertAdjacentElement("afterend", row);
+      viewer.hidden = false;
+    }
+
+    function setViewerPre(text) {
+      viewerBody.innerHTML = '<pre id="json-output"></pre>';
+      viewerBody.querySelector("pre").textContent = text;
+    }
+
+    function setViewerFrame(url) {
+      viewerBody.innerHTML = `<iframe class="viewer-frame" src="${escapeHtml(url)}"></iframe>`;
+    }
+
+    async function viewJson(url, title, button, mode) {
+      if (window.location.protocol === "file:" && !/^https?:\/\//.test(url)) {
+        window.open(url, "_blank");
+        return;
+      }
+
+      placeViewerNear(button);
+      viewerTitle.textContent = title;
+
+      if (mode === "embed") {
+        setViewerFrame(url);
+        viewer.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        return;
+      }
+
+      setViewerPre("Loading...");
+      viewer.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+      try {
+        if (!jsonCache.has(url)) {
+          const response = await fetch(url, { cache: "force-cache" });
+          if (!response.ok) {
+            throw new Error(`${response.status} ${response.statusText}`);
+          }
+          const data = await response.json();
+          jsonCache.set(url, JSON.stringify(data, null, 2));
+        }
+        setViewerPre(jsonCache.get(url));
+      } catch (error) {
+        setViewerPre([
+          "Could not load JSON inside this page.",
+          "",
+          "Open the JSON URL directly instead:",
+          url,
+          "",
+          error.message
+        ].join("\n"));
+      }
+    }
+
+    function diagramPopup(url) {
+      const img = new Image();
+      img.src = url;
+      img.addEventListener("load", function() {
+        const zoom = 3;
+        const winWidth = parseInt(zoom * this.naturalWidth);
+        const winHeight = parseInt(zoom * this.naturalHeight);
+        const popup = window.open("", "_blank", `width=${winWidth}, height=${winHeight}, scrollbars=auto`);
+        popup.document.write(`<style>body{margin:0px;}</style><a href="#" onclick="window.close()" onfocus="this.blur()"><img src="${url}" width="${this.naturalWidth}" height="${this.naturalHeight}"></a>`);
+        popup.document.body.style.zoom = `${zoom}00%`;
+      });
+      return false;
+    }
+
+    async function init() {
+      const response = await fetch(MANIFEST_URL);
+      records = await response.json();
+
+      const crossings = Array.from(new Set(records.map(record => record.crossing))).sort((a, b) => a - b);
+      crossingFilter.insertAdjacentHTML("beforeend", crossings.map(crossing => (
+        `<option value="${crossing}">${crossing} crossings</option>`
+      )).join(""));
+
+      filtered = records;
+      render();
+    }
+
+    searchInput.addEventListener("input", applyFilters);
+    crossingFilter.addEventListener("change", applyFilters);
+    hyperbolicFilter.addEventListener("change", applyFilters);
+    pageSizeSelect.addEventListener("change", () => {
+      page = 1;
+      render();
+    });
+    prevPage.addEventListener("click", () => {
+      page -= 1;
+      render();
+    });
+    nextPage.addEventListener("click", () => {
+      page += 1;
+      render();
+    });
+    tbody.addEventListener("click", event => {
+      const button = event.target.closest("button[data-view-url]");
+      if (button) {
+        viewJson(button.dataset.viewUrl, button.dataset.viewTitle, button, button.dataset.viewMode);
+      }
+    });
+    document.getElementById("close-viewer").addEventListener("click", () => {
+      viewer.hidden = true;
+      const oldRow = document.getElementById("viewer-row");
+      if (oldRow) {
+        oldRow.remove();
+      }
+    });
+
+    init().catch(error => {
+      resultCount.textContent = "Could not load knot data.";
+      tbody.innerHTML = `<tr><td colspan="9" class="empty">${escapeHtml(error.message)}</td></tr>`;
+    });
+  </script>
+</body>
+</html>
