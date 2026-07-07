@@ -11,7 +11,7 @@
   - 현재 로컬 Wrangler OAuth access token은 `2026-07-08` 만료 예정이라 GitHub Actions용 장기 credential로는 부적합.
   - 현재 저장소에는 `_worker.js`, `_routes.json`, `robots.txt`가 없으며, 이전 Functions 과금 이슈를 재도입하는 변경은 이번 작업에 포함하지 않음.
 
-## 2026.0707(月)19:47 [git: working tree]
+## 2026.0707(月)19:47 [git: 284d98f8]
 
 - GitHub Actions 재실행 결과, `CLOUDFLARE_API_TOKEN` 누락 문제 해소 후에도 Pages 업로드가 실패함을 확인.
 - 실패 원인:
