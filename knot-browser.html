@@ -238,6 +238,139 @@
       font-weight: 650;
     }
 
+    .viewer-content {
+      padding: 12px;
+    }
+
+    .viewer-tabs {
+      display: flex;
+      gap: 6px;
+      border-bottom: 1px solid var(--line);
+      margin: -12px -12px 12px;
+      padding: 8px 12px 0;
+      overflow-x: auto;
+    }
+
+    .viewer-tab {
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+      border-bottom-color: transparent;
+      white-space: nowrap;
+    }
+
+    .viewer-tab[aria-selected="true"] {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: #113f68;
+      font-weight: 650;
+    }
+
+    .viewer-panel[hidden] {
+      display: none;
+    }
+
+    .viewer-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .viewer-fact {
+      border: 1px solid var(--line);
+      background: #fbfcfd;
+      padding: 8px 10px;
+    }
+
+    .viewer-label {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 2px;
+    }
+
+    .viewer-value {
+      font-weight: 650;
+      overflow-wrap: anywhere;
+    }
+
+    .viewer-section-title {
+      margin: 14px 0 8px;
+      font-size: 15px;
+      font-weight: 650;
+    }
+
+    .viewer-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .ideal-card {
+      border: 1px solid var(--line);
+      background: #fff;
+      padding: 10px;
+    }
+
+    .ideal-card.geometric {
+      border-color: var(--good);
+      background: #f4fbf8;
+    }
+
+    .ideal-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+      font-weight: 650;
+    }
+
+    .ideal-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .ideal-volume {
+      margin-top: 8px;
+      color: #313b49;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px;
+    }
+
+    .json-tree {
+      max-height: 520px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      background: #fbfcfd;
+      padding: 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px;
+    }
+
+    .json-tree details {
+      margin-left: 14px;
+    }
+
+    .json-tree summary {
+      cursor: pointer;
+      color: #26313f;
+    }
+
+    .json-leaf {
+      margin-left: 20px;
+      overflow-wrap: anywhere;
+    }
+
+    .json-key {
+      color: #184d7a;
+      font-weight: 650;
+    }
+
+    .json-primitive {
+      color: #5a3212;
+    }
+
     pre {
       margin: 0;
       max-height: 520px;
@@ -386,7 +519,12 @@
       return R2_BASE_URL + parts.map(part => encodeURIComponent(part)).join("/");
     }
 
-    function compactVolume(values) {
+    function compactVolume(record) {
+      if (!record.hyperbolic) {
+        return '<span class="muted">-</span>';
+      }
+
+      const values = record.geometricVolume;
       if (!values || values.length === 0) {
         return '<span class="muted">none marked</span>';
       }
@@ -522,7 +660,7 @@
               : escapeHtml(record.name)
           }</td>
           <td>${record.hyperbolic ? "yes" : "no"}</td>
-          <td class="volume">${compactVolume(record.geometricVolume)}</td>
+          <td class="volume">${compactVolume(record)}</td>
           <td class="number">${record.componentCount}</td>
           <td>${solutionChips(record)}</td>
           <td>${obstructionChips(record)}</td>
@@ -558,6 +696,198 @@
       viewerBody.innerHTML = `<iframe class="viewer-frame" src="${escapeHtml(url)}"></iframe>`;
     }
 
+    function asArray(value) {
+      if (value === undefined || value === null) {
+        return [];
+      }
+      return Array.isArray(value) ? value : [value];
+    }
+
+    function firstAvailable(...values) {
+      return values.find(value => value !== undefined && value !== null);
+    }
+
+    function primaryIdealsFromReps(parabolicReps) {
+      const reps = Array.isArray(parabolicReps)
+        ? parabolicReps.filter(item => item && typeof item === "object")
+        : (parabolicReps && typeof parabolicReps === "object" ? [parabolicReps] : []);
+
+      const ideals = [];
+      reps.forEach(rep => {
+        if (Array.isArray(rep.PrimaryIdeals)) {
+          ideals.push(...rep.PrimaryIdeals);
+        }
+        const comps = rep.Comps;
+        if (comps && Array.isArray(comps.PrimaryIdeals)) {
+          ideals.push(...comps.PrimaryIdeals);
+        }
+      });
+      return ideals;
+    }
+
+    function primaryIdealsFromData(data) {
+      const diagram = data && data.Diagram && typeof data.Diagram === "object" ? data.Diagram : {};
+      return primaryIdealsFromReps(firstAvailable(data && data.ParabolicReps, diagram.ParabolicReps));
+    }
+
+    function parseGeometricIndices(value) {
+      if (value === undefined || value === null || value === 0 || value === "0" || value === "{0}" || value === "") {
+        return [];
+      }
+      if (typeof value === "number") {
+        return value > 0 ? [value] : [];
+      }
+      if (Array.isArray(value)) {
+        return value
+          .map(item => Number(String(item).trim()))
+          .filter(item => Number.isInteger(item) && item > 0);
+      }
+      return String(value)
+        .replace(/^\{|\}$/g, "")
+        .split(",")
+        .map(item => Number(item.trim()))
+        .filter(item => Number.isInteger(item) && item > 0);
+    }
+
+    function selectedComplexVolumes(value, indices) {
+      const values = asArray(value);
+      return indices
+        .map(index => values[index - 1])
+        .filter(item => item !== undefined && item !== null);
+    }
+
+    function componentSolutionCount(ideal) {
+      if (!ideal || typeof ideal !== "object") {
+        return "?";
+      }
+      const dimension = ideal.IdealDimension;
+      if (ideal.IsZeroDim === false && Number.isInteger(dimension) && dimension > 0) {
+        return `dim ${dimension}`;
+      }
+      if (Number.isInteger(dimension) && dimension > 0) {
+        return `dim ${dimension}`;
+      }
+      if (ideal.NumberOfSols !== undefined && ideal.NumberOfSols !== null) {
+        return ideal.NumberOfSols;
+      }
+      const complexVolumes = asArray(ideal.ComplexVolumeN);
+      return complexVolumes.length || "?";
+    }
+
+    function boolText(value) {
+      if (value === true) {
+        return "yes";
+      }
+      if (value === false) {
+        return "no";
+      }
+      return "-";
+    }
+
+    function viewerFact(label, value) {
+      return `
+        <div class="viewer-fact">
+          <span class="viewer-label">${escapeHtml(label)}</span>
+          <span class="viewer-value">${escapeHtml(value ?? "-")}</span>
+        </div>
+      `;
+    }
+
+    function idealSummaryCard(ideal, index) {
+      const geometricIndices = parseGeometricIndices(ideal.GeometricComponent);
+      const geometricVolumes = selectedComplexVolumes(ideal.ComplexVolumeN, geometricIndices);
+      const geometric = geometricIndices.length > 0;
+      const obstruction = ideal.Obstruction ?? "-";
+      const chips = [
+        `<span class="chip">solutions ${escapeHtml(componentSolutionCount(ideal))}</span>`,
+        `<span class="chip">dimension ${escapeHtml(ideal.IdealDimension ?? "-")}</span>`,
+        `<span class="chip">obstruction ${escapeHtml(obstruction)}</span>`
+      ];
+      if (geometric) {
+        chips.push(`<span class="chip geometric">geometric ${escapeHtml(geometricIndices.join(", "))}</span>`);
+      }
+
+      return `
+        <div class="ideal-card${geometric ? " geometric" : ""}">
+          <div class="ideal-head">
+            <span>${escapeHtml(ideal.IdealName || `Ideal ${index}`)}</span>
+            <span class="muted">#${index}</span>
+          </div>
+          <div class="ideal-meta">${chips.join("")}</div>
+          ${
+            geometricVolumes.length
+              ? `<div class="ideal-volume">${geometricVolumes.map(value => formatComplexVolume(value)).join("<br>")}</div>`
+              : ""
+          }
+        </div>
+      `;
+    }
+
+    function jsonTree(value, label = "root", depth = 0) {
+      const key = `<span class="json-key">${escapeHtml(label)}</span>`;
+      if (value === null || typeof value !== "object") {
+        return `<div class="json-leaf">${key}: <span class="json-primitive">${escapeHtml(JSON.stringify(value))}</span></div>`;
+      }
+
+      const entries = Array.isArray(value) ? value.map((item, index) => [index, item]) : Object.entries(value);
+      const type = Array.isArray(value) ? `Array(${value.length})` : `Object(${entries.length})`;
+      const children = entries.map(([childLabel, childValue]) => jsonTree(childValue, childLabel, depth + 1)).join("");
+      const open = depth < 2 ? " open" : "";
+      return `<details${open}><summary>${key}: ${type}</summary>${children}</details>`;
+    }
+
+    function setViewerData(data) {
+      const ideals = primaryIdealsFromData(data);
+      const geometricCards = ideals
+        .map((ideal, index) => ({ ideal, index: index + 1, geometric: parseGeometricIndices(ideal.GeometricComponent).length > 0 }))
+        .filter(item => item.geometric)
+        .map(item => idealSummaryCard(item.ideal, item.index));
+      const allCards = ideals.map((ideal, index) => idealSummaryCard(ideal, index + 1));
+      const rawJson = JSON.stringify(data, null, 2);
+
+      viewerBody.innerHTML = `
+        <div class="viewer-content">
+          <div class="viewer-tabs" role="tablist" aria-label="JSON viewer sections">
+            <button class="viewer-tab" type="button" data-panel="summary" aria-selected="true">Summary</button>
+            <button class="viewer-tab" type="button" data-panel="ideals" aria-selected="false">Ideals</button>
+            <button class="viewer-tab" type="button" data-panel="tree" aria-selected="false">Tree</button>
+            <button class="viewer-tab" type="button" data-panel="raw" aria-selected="false">Raw JSON</button>
+          </div>
+          <section class="viewer-panel" data-panel="summary">
+            <div class="viewer-grid">
+              ${viewerFact("Index", data.Index)}
+              ${viewerFact("Name", data.Name || data.RolfsenName)}
+              ${viewerFact("Hyperbolic", boolText(data.Hyperbolic))}
+              ${viewerFact("Torus", boolText(data.Torus))}
+              ${viewerFact("Satellite", boolText(data.Satellite))}
+              ${viewerFact("Primary ideals", ideals.length)}
+            </div>
+            <div class="viewer-section-title">Geometric ideal${geometricCards.length === 1 ? "" : "s"}</div>
+            <div class="viewer-list">${geometricCards.length ? geometricCards.join("") : '<span class="muted">-</span>'}</div>
+          </section>
+          <section class="viewer-panel" data-panel="ideals" hidden>
+            <div class="viewer-list">${allCards.length ? allCards.join("") : '<span class="muted">No primary ideals found.</span>'}</div>
+          </section>
+          <section class="viewer-panel" data-panel="tree" hidden>
+            <div class="json-tree">${jsonTree(data)}</div>
+          </section>
+          <section class="viewer-panel" data-panel="raw" hidden>
+            <pre id="json-output"></pre>
+          </section>
+        </div>
+      `;
+      viewerBody.querySelector("#json-output").textContent = rawJson;
+    }
+
+    function selectViewerPanel(panelName) {
+      viewerBody.querySelectorAll(".viewer-tab").forEach(tab => {
+        tab.setAttribute("aria-selected", String(tab.dataset.panel === panelName));
+      });
+      viewerBody.querySelectorAll(".viewer-panel").forEach(panel => {
+        panel.hidden = panel.dataset.panel !== panelName;
+      });
+    }
+
     async function viewJson(url, title, button, mode) {
       if (window.location.protocol === "file:" && !/^https?:\/\//.test(url)) {
         window.open(url, "_blank");
@@ -583,9 +913,9 @@
             throw new Error(`${response.status} ${response.statusText}`);
           }
           const data = await response.json();
-          jsonCache.set(url, JSON.stringify(data, null, 2));
+          jsonCache.set(url, data);
         }
-        setViewerPre(jsonCache.get(url));
+        setViewerData(jsonCache.get(url));
       } catch (error) {
         setViewerPre([
           "Could not load JSON inside this page.",
@@ -644,6 +974,12 @@
       const button = event.target.closest("button[data-view-url]");
       if (button) {
         viewJson(button.dataset.viewUrl, button.dataset.viewTitle, button, button.dataset.viewMode);
+      }
+    });
+    viewerBody.addEventListener("click", event => {
+      const tab = event.target.closest(".viewer-tab");
+      if (tab) {
+        selectViewerPanel(tab.dataset.panel);
       }
     });
     document.getElementById("close-viewer").addEventListener("click", () => {

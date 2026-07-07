@@ -7,14 +7,26 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 JSON_SOURCES = [
     {
-        "directory": ROOT / "parabolic" / "data" / "json",
+        "directories": [
+            ROOT / "parabolic" / "data" / "~12crossings",
+            ROOT / "parabolic" / "data" / "~12-crossings",
+        ],
         "max_crossing": 12,
-        "r2_prefix": "~12-crossings",
+        "r2_prefixes": {
+            "~12crossings": "~12crossings",
+            "~12-crossings": "~12-crossings",
+        },
     },
     {
-        "directory": ROOT / "parabolic" / "data" / "13-crossings",
+        "directories": [
+            ROOT / "parabolic" / "data" / "13crossings",
+            ROOT / "parabolic" / "data" / "13-crossings",
+        ],
         "max_crossing": 13,
-        "r2_prefix": "13-crossings",
+        "r2_prefixes": {
+            "13crossings": "13crossings",
+            "13-crossings": "13-crossings",
+        },
     },
 ]
 OUT = ROOT / "parabolic" / "data" / "knot-browser-manifest.json"
@@ -22,6 +34,14 @@ OUT = ROOT / "parabolic" / "data" / "knot-browser-manifest.json"
 
 def rel(path):
     return path.relative_to(ROOT).as_posix()
+
+
+def resolve_source(source):
+    for directory in source["directories"]:
+        if directory.exists():
+            prefix = source["r2_prefixes"].get(directory.name, directory.name)
+            return directory, prefix
+    return None, None
 
 
 def crossing_number(name):
@@ -212,11 +232,13 @@ def summarize_json(path, r2_prefix):
 def main():
     rows = []
     for source in JSON_SOURCES:
-        directory = source["directory"]
-        if not directory.exists():
+        directory, r2_prefix = resolve_source(source)
+        if directory is None:
+            candidates = ", ".join(rel(path) for path in source["directories"])
+            print(f"skipping missing source; expected one of: {candidates}")
             continue
         for path in sorted(directory.glob("*.json")):
-            record = summarize_json(path, source["r2_prefix"])
+            record = summarize_json(path, r2_prefix)
             if record["crossing"] is not None and record["crossing"] <= source["max_crossing"]:
                 rows.append(record)
 
