@@ -276,6 +276,11 @@ def has_positive_dimension(ideal):
     return isinstance(dimension, int) and dimension > 0
 
 
+def is_abelian_ideal(ideal):
+    name = str(ideal.get("IdealName") or "")
+    return name.lower().startswith("ab")
+
+
 def first_available(*values):
     for value in values:
         if value is not None:
@@ -323,6 +328,7 @@ def summarize_json(path, r2_prefix):
                 "solutions": component_solution_count(ideal),
                 "dimension": ideal.get("IdealDimension"),
                 "positiveDimensional": positive_dimensional,
+                "abelian": is_abelian_ideal(ideal),
                 "obstruction": obstruction,
                 "geometric": geometric,
                 "geometricIndices": geometric_indices,

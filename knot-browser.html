@@ -129,7 +129,7 @@
 
     table {
       width: 100%;
-      min-width: 1320px;
+      min-width: 1450px;
       border-collapse: separate;
       border-spacing: 0;
       table-layout: fixed;
@@ -140,7 +140,7 @@
     col.col-hyp { width: 64px; }
     col.col-volume { width: 230px; }
     col.col-count { width: 76px; }
-    col.col-matrix { width: 430px; }
+    col.col-matrix { width: 560px; }
     col.col-repo { width: 175px; }
     col.col-new { width: 163px; }
 
@@ -162,6 +162,31 @@
       font-weight: 650;
       color: #26313f;
       white-space: nowrap;
+    }
+
+    .table-wrap th:nth-child(1),
+    .table-wrap td:nth-child(1) {
+      text-align: right;
+    }
+
+    .table-wrap th:nth-child(3),
+    .table-wrap td:nth-child(3),
+    .table-wrap th:nth-child(5),
+    .table-wrap td:nth-child(5),
+    .table-wrap th:nth-child(7),
+    .table-wrap td:nth-child(7),
+    .table-wrap th:nth-child(8),
+    .table-wrap td:nth-child(8) {
+      text-align: center;
+    }
+
+    .table-wrap th:nth-child(2),
+    .table-wrap td:nth-child(2),
+    .table-wrap th:nth-child(4),
+    .table-wrap td:nth-child(4),
+    .table-wrap th:nth-child(6),
+    .table-wrap td:nth-child(6) {
+      text-align: left;
     }
 
     tbody tr:nth-child(even) {
@@ -209,21 +234,40 @@
     }
 
     .ideal-matrix {
-      display: inline-grid;
+      display: block;
       gap: 2px;
       color: #313b49;
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       font-size: 13px;
+      max-width: 100%;
+      overflow-x: auto;
+      padding-bottom: 3px;
       white-space: nowrap;
+    }
+
+    .ideal-matrix::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    .ideal-matrix::-webkit-scrollbar-track {
+      background: #eef1f5;
+    }
+
+    .ideal-matrix::-webkit-scrollbar-thumb {
+      background: #c2cbd6;
+      border-radius: 999px;
     }
 
     .matrix-row {
       display: flex;
       align-items: center;
       gap: 3px;
+      flex-wrap: nowrap;
+      width: max-content;
     }
 
     .matrix-label {
+      flex: 0 0 24px;
       min-width: 24px;
       color: var(--muted);
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -237,6 +281,7 @@
     }
 
     .matrix-row .chip {
+      flex: 0 0 auto;
       margin: 0;
       padding: 0 6px;
       min-width: 38px;
@@ -612,12 +657,13 @@
 
   <script>
     const MANIFEST_URL = "parabolic/data/knot-browser-manifest.json";
-    const R2_BASE_URL = "https://pub-1e0df66310b5459ab9a8bfd35e3a1505.r2.dev/";
+    const R2_BASE_URL = "https://data.diagram.site/";
 
     let records = [];
     let filtered = [];
     let page = 1;
     const jsonCache = new Map();
+    let activeViewerPanel = "summary";
 
     const searchInput = document.getElementById("search");
     const crossingFilter = document.getElementById("crossing-filter");
@@ -860,7 +906,7 @@
               ? `<a href="#none" onclick="return diagramPopup('${escapeHtml(record.diagram)}')">${escapeHtml(record.name)}</a>`
               : escapeHtml(record.name)
           }</td>
-          <td>${record.hyperbolic ? "yes" : "no"}</td>
+          <td>${oxText(record.hyperbolic)}</td>
           <td class="volume">${compactVolume(record)}</td>
           <td class="number">${record.componentCount}</td>
           <td>${idealMatrix(record)}</td>
@@ -995,6 +1041,14 @@
       return ideal && (ideal.IsZeroDim === false || (Number.isInteger(ideal.IdealDimension) && ideal.IdealDimension > 0));
     }
 
+    function isAbelianIdeal(ideal) {
+      return String(ideal && ideal.IdealName || "").toLowerCase().startsWith("ab");
+    }
+
+    function isAbelianComponent(component) {
+      return Boolean(component && (component.abelian || String(component.name || "").toLowerCase().startsWith("ab")));
+    }
+
     function displayName(name) {
       const underscored = String(name || "").match(/^(\d+)([an])_(\d+)$/);
       if (underscored) {
@@ -1033,6 +1087,7 @@
           solutions: componentSolutionCount(ideal),
           dimension: ideal.IdealDimension,
           positiveDimensional,
+          abelian: isAbelianIdeal(ideal),
           obstruction,
           geometric: geometricIndices.length > 0,
           geometricIndices
@@ -1082,6 +1137,9 @@
       let obstructionPlus = 0;
 
       (record.components || []).forEach(component => {
+        if (isAbelianComponent(component)) {
+          return;
+        }
         const solutions = numericValue(component.solutions);
         const obstruction = obstructionValue(component.obstruction);
         if (solutions === null || solutions < 0) {
@@ -1112,6 +1170,16 @@
       }
       if (value === false) {
         return "no";
+      }
+      return "-";
+    }
+
+    function oxText(value) {
+      if (value === true) {
+        return "O";
+      }
+      if (value === false) {
+        return "X";
       }
       return "-";
     }
@@ -1170,11 +1238,11 @@
           <tbody>
             <tr><th>Index</th><td>${escapeHtml(record.index)}</td></tr>
             <tr><th>Knot</th><td>${escapeHtml(record.name)}</td></tr>
-            <tr><th>Hyperbolic</th><td>${record.hyperbolic ? "yes" : "no"}</td></tr>
+            <tr><th>Hyperbolic</th><td>${oxText(record.hyperbolic)}</td></tr>
             <tr><th>Determinant</th><td>${escapeHtml(record.determinant ?? "-")}</td></tr>
             <tr><th>Geometric complex volume</th><td class="volume">${volume}</td></tr>
             <tr><th># ideals</th><td>${escapeHtml(record.componentCount)}</td></tr>
-            <tr><th>Positive-dimensional ideal</th><td>${record.hasPositiveDimensionalIdeal ? "yes" : "no"}</td></tr>
+            <tr><th>Positive-dimensional ideal</th><td>${oxText(record.hasPositiveDimensionalIdeal)}</td></tr>
             <tr><th>Ideal matrix</th><td>${idealMatrix(record)}</td></tr>
           </tbody>
         </table>
@@ -1184,18 +1252,15 @@
     function determinantComparison(record) {
       const stats = solutionStats(record);
       const target = stats.determinantTarget;
-      const status = target === null
+      const expression = target === null
         ? "-"
-        : (stats.difference === target ? "match" : "different");
+        : `${stats.obstructionMinus} - ${stats.obstructionPlus} = ${stats.difference}`;
       return `
         <table class="summary-table">
           <tbody>
             <tr><th>det(K)</th><td>${escapeHtml(stats.determinant ?? "-")}</td></tr>
             <tr><th>(det(K)-1)/2</th><td>${escapeHtml(target ?? "-")}</td></tr>
-            <tr><th>Solutions with obstruction -1</th><td>${escapeHtml(stats.obstructionMinus)}</td></tr>
-            <tr><th>Solutions with obstruction +1</th><td>${escapeHtml(stats.obstructionPlus)}</td></tr>
-            <tr><th>Difference</th><td>${escapeHtml(stats.difference)}</td></tr>
-            <tr><th>Comparison</th><td>${escapeHtml(status)}</td></tr>
+            <tr><th>N(-1)-N(+1), non-abelian</th><td>${escapeHtml(expression)}</td></tr>
           </tbody>
         </table>
       `;
@@ -1290,14 +1355,18 @@
         </div>
       `;
       viewerBody.querySelector("#json-output").textContent = rawJson;
+      selectViewerPanel(activeViewerPanel);
     }
 
     function selectViewerPanel(panelName) {
+      const hasPanel = Array.from(viewerBody.querySelectorAll(".viewer-panel"))
+        .some(panel => panel.dataset.panel === panelName);
+      activeViewerPanel = hasPanel ? panelName : "summary";
       viewerBody.querySelectorAll(".viewer-tab").forEach(tab => {
-        tab.setAttribute("aria-selected", String(tab.dataset.panel === panelName));
+        tab.setAttribute("aria-selected", String(tab.dataset.panel === activeViewerPanel));
       });
       viewerBody.querySelectorAll(".viewer-panel").forEach(panel => {
-        panel.hidden = panel.dataset.panel !== panelName;
+        panel.hidden = panel.dataset.panel !== activeViewerPanel;
       });
     }
 
