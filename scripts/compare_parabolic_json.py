@@ -182,6 +182,68 @@ def normalized_poly_list(polys: list[Any]) -> list[str]:
     return sorted(normalize_poly_text(p) for p in polys)
 
 
+def parse_pdcode(pdcode: Any) -> list[tuple[int, int, int, int]] | None:
+    tuples = []
+    for entry in as_list(pdcode):
+        parsed = parse_int_brace_list(entry)
+        if parsed is None or len(parsed) != 4:
+            return None
+        tuples.append(tuple(parsed))
+    return tuples
+
+
+def relabel_pd_tuple(tup: tuple[int, int, int, int], sign: int, shift: int, modulus: int) -> tuple[int, int, int, int]:
+    return tuple(((sign * (x - 1) + shift) % modulus) + 1 for x in tup)  # type: ignore[return-value]
+
+
+def canonical_pd_crossing(tup: tuple[int, int, int, int]) -> tuple[int, int, int, int]:
+    rotations = [tup[i:] + tup[:i] for i in range(4)]
+    return min(rotations)
+
+
+def canonical_pd_under_relabeling(pdcode: Any) -> tuple[tuple[tuple[int, int, int, int], ...], int, int] | None:
+    tuples = parse_pdcode(pdcode)
+    if tuples is None:
+        return None
+    if not tuples:
+        return tuple(), 1, 0
+    modulus = max(max(tup) for tup in tuples)
+    candidates = []
+    for sign in (1, -1):
+        for shift in range(modulus):
+            relabeled = tuple(sorted(canonical_pd_crossing(relabel_pd_tuple(tup, sign, shift, modulus)) for tup in tuples))
+            candidates.append((relabeled, sign, shift))
+    return min(candidates, key=lambda item: item[0])
+
+
+def pdcode_equivalence(old_pd: Any, new_pd: Any) -> tuple[bool, str | None]:
+    old_canon = canonical_pd_under_relabeling(old_pd)
+    new_canon = canonical_pd_under_relabeling(new_pd)
+    if old_canon is None or new_canon is None:
+        return old_pd == new_pd, None
+    same = old_canon[0] == new_canon[0]
+    if not same:
+        return False, None
+    sign_changed = old_canon[1] != new_canon[1]
+    shift = (new_canon[2] - old_canon[2]) % (max(max(tup) for tup in parse_pdcode(new_pd) or [(0, 0, 0, 0)]) or 1)
+    if old_pd == new_pd:
+        return True, None
+    if sign_changed:
+        return True, f"PDcode differs only by dihedral edge relabeling/crossing rotation/permutation; canonical shift delta={shift}"
+    return True, f"PDcode differs only by cyclic edge relabeling/crossing rotation/permutation; canonical shift delta={shift}"
+
+
+def pdcode_status(old_pd: Any, new_pd: Any) -> str:
+    if old_pd == new_pd:
+        return "exact"
+    same, note = pdcode_equivalence(old_pd, new_pd)
+    if same and note:
+        return "equivalent_by_relabeling"
+    if same:
+        return "equivalent"
+    return "changed"
+
+
 def multiset(values: list[Any]) -> dict[str, int]:
     return dict(Counter(json.dumps(stable_value(v), sort_keys=True) for v in values))
 
@@ -389,9 +451,14 @@ def compare_records(old: CanonicalRecord, new: CanonicalRecord) -> tuple[list[st
             else:
                 differences.append(f"{field}: old={getattr(old, field)!r}, new={getattr(new, field)!r}")
 
-    for field in ("Scode", "Acode", "PDcode", "CBtype"):
+    for field in ("Scode", "Acode", "CBtype"):
         if old.diagram.get(field) != new.diagram.get(field):
             differences.append(f"Diagram.{field} changed")
+    pd_same, pd_note = pdcode_equivalence(old.diagram.get("PDcode"), new.diagram.get("PDcode"))
+    if not pd_same:
+        differences.append("Diagram.PDcode changed")
+    elif pd_note:
+        warnings.append(pd_note)
 
     old_starts, _ = validate_solving_seq(old)
     new_starts, _ = validate_solving_seq(new)
@@ -465,6 +532,7 @@ def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
         "index",
         "name",
         "severity",
+        "pdcode_status",
         "old_primary_count",
         "new_primary_count",
         "old_starting_arc_count",
@@ -572,12 +640,14 @@ def main() -> int:
         new_starts = validate_solving_seq(new_record)[0] if new_record else None
         old_primary_count = len(old_record.primary_ideals) if old_record else None
         new_primary_count = len(new_record.primary_ideals) if new_record else None
+        pd_status = pdcode_status(old_record.diagram.get("PDcode"), new_record.diagram.get("PDcode")) if old_record and new_record else None
         severity = severity_for_issues(defects, differences, warnings)
         row = {
             "filename": filename,
             "index": new_record.index if new_record else (old_record.index if old_record else None),
             "name": new_record.name if new_record else (old_record.name if old_record else None),
             "severity": severity,
+            "pdcode_status": pd_status,
             "old_primary_count": old_primary_count,
             "new_primary_count": new_primary_count,
             "old_starting_arc_count": old_starts,
