@@ -189,6 +189,10 @@
       text-align: left;
     }
 
+    #viewer-row > td {
+      text-align: left;
+    }
+
     tbody tr:nth-child(even) {
       background: #fbfcfd;
     }
@@ -320,6 +324,7 @@
       margin: 8px 0;
       border: 1px solid var(--line);
       background: var(--panel);
+      text-align: left;
     }
 
     .viewer-head {
@@ -429,20 +434,6 @@
       max-width: none;
     }
 
-    .viewer-check {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      margin: 10px 0;
-      color: var(--text);
-      font-size: 14px;
-    }
-
-    .viewer-check input {
-      height: auto;
-      min-width: auto;
-    }
-
     .viewer-notice {
       border: 1px solid var(--warn);
       background: #fff8e8;
@@ -450,10 +441,6 @@
       padding: 8px 10px;
       margin: 10px 0;
       font-size: 14px;
-    }
-
-    .determinant-block[hidden] {
-      display: none;
     }
 
     .viewer-list {
@@ -465,6 +452,7 @@
       border: 1px solid var(--line);
       background: #fff;
       padding: 10px;
+      text-align: left;
     }
 
     .ideal-card.geometric {
@@ -492,6 +480,7 @@
       color: #313b49;
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       font-size: 13px;
+      text-align: left;
     }
 
     .json-tree {
@@ -502,6 +491,7 @@
       padding: 10px;
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       font-size: 13px;
+      text-align: left;
     }
 
     .json-tree details {
@@ -537,6 +527,7 @@
       font-size: 13px;
       line-height: 1.45;
       tab-size: 2;
+      text-align: left;
     }
 
     .viewer-frame {
@@ -724,9 +715,16 @@
 
     function parseComplexParts(value) {
       const cleaned = stripPrecision(value).replace(/\s+/g, " ").trim();
-      const match = cleaned.match(/^([+-]?\d+(?:\.\d+)?)(?:\s*([+-])\s*(\d+(?:\.\d+)?)\s*\*?\s*I)?$/);
+      const numberPattern = "([+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+))";
+      const unsignedNumberPattern = "((?:\\d+(?:\\.\\d*)?|\\.\\d+))";
+      const match = cleaned.match(new RegExp(`^${numberPattern}(?:\\s*([+-])\\s*${unsignedNumberPattern}\\s*\\*?\\s*I)?$`));
       if (!match) {
-        return null;
+        const imaginaryOnlyMatch = cleaned.match(new RegExp(`^${numberPattern}\\s*\\*?\\s*I$`));
+        if (!imaginaryOnlyMatch) {
+          return null;
+        }
+        const imaginary = Number(imaginaryOnlyMatch[1]);
+        return Number.isFinite(imaginary) ? { real: 0, imaginary } : null;
       }
       const real = Number(match[1]);
       const imaginary = match[2] ? Number(`${match[2]}${match[3]}`) : 0;
@@ -752,6 +750,14 @@
     }
 
     function formatComplexVolume(value) {
+      const parts = parseComplexParts(value);
+      if (parts) {
+        if (Math.abs(parts.imaginary) < 1e-12) {
+          return escapeHtml(shortNumber(parts.real));
+        }
+        const sign = parts.imaginary < 0 ? "&minus;" : "+";
+        return `${escapeHtml(shortNumber(parts.real))} ${sign} ${escapeHtml(shortNumber(Math.abs(parts.imaginary)))}&radic;&minus;1`;
+      }
       const formatted = stripPrecision(value)
         .replace(/\s*\*\s*I\b/g, "sqrt(-1)")
         .replace(/\bI\b/g, "sqrt(-1)")
@@ -1261,6 +1267,7 @@
             <tr><th>det(K)</th><td>${escapeHtml(stats.determinant ?? "-")}</td></tr>
             <tr><th>(det(K)-1)/2</th><td>${escapeHtml(target ?? "-")}</td></tr>
             <tr><th>N(-1)-N(+1), non-abelian</th><td>${escapeHtml(expression)}</td></tr>
+            <tr><th>Ideal matrix</th><td>${idealMatrix(record)}</td></tr>
           </tbody>
         </table>
       `;
@@ -1324,10 +1331,6 @@
             <div class="viewer-list">${componentCards.length ? componentCards.join("") : '<span class="muted">No component summary found.</span>'}</div>
           </section>
           <section class="viewer-panel" data-panel="determinant" hidden>
-            <label class="viewer-check">
-              <input type="checkbox" data-determinant-toggle checked>
-              Show determinant comparison
-            </label>
             <div class="determinant-block">${determinantComparison(record)}</div>
           </section>
           <section class="viewer-panel" data-panel="tree" hidden>
@@ -1392,10 +1395,6 @@
             <div class="viewer-list">${allCards.length ? allCards.join("") : '<span class="muted">No primary ideals found.</span>'}</div>
           </section>
           <section class="viewer-panel" data-panel="determinant" hidden>
-            <label class="viewer-check">
-              <input type="checkbox" data-determinant-toggle checked>
-              Show determinant comparison
-            </label>
             <div class="determinant-block">${determinantComparison(viewRecord)}</div>
           </section>
           <section class="viewer-panel" data-panel="tree" hidden>
@@ -1534,15 +1533,6 @@
       const tab = event.target.closest(".viewer-tab");
       if (tab) {
         selectViewerPanel(tab.dataset.panel);
-      }
-    });
-    viewerBody.addEventListener("change", event => {
-      const toggle = event.target.closest("[data-determinant-toggle]");
-      if (toggle) {
-        const block = viewerBody.querySelector(".determinant-block");
-        if (block) {
-          block.hidden = !toggle.checked;
-        }
       }
     });
     document.getElementById("close-viewer").addEventListener("click", () => {
