@@ -74,7 +74,7 @@
 
     .toolbar {
       display: grid;
-      grid-template-columns: minmax(220px, 1fr) auto auto auto auto;
+      grid-template-columns: minmax(220px, 1fr) auto auto auto auto auto;
       gap: 10px;
       align-items: center;
       margin-bottom: 14px;
@@ -95,6 +95,10 @@
       color: var(--text);
       padding: 0 10px;
       min-width: 0;
+    }
+
+    .precision-input {
+      width: 120px;
     }
 
     button {
@@ -625,7 +629,7 @@
 
   <main>
     <div class="toolbar">
-      <input id="search" type="search" placeholder="Search by crossing, name, index, obstruction, or volume" autofocus>
+      <input id="search" type="search" placeholder="Search by crossing, name, index, or volume" autofocus>
       <select id="crossing-filter" aria-label="Crossing filter">
         <option value="">All crossings</option>
       </select>
@@ -639,6 +643,7 @@
         <option value="positive">Has positive-dimensional ideal</option>
         <option value="zero">Zero-dimensional ideals only</option>
       </select>
+      <input id="volume-precision" class="precision-input" type="text" value="4" inputmode="numeric" aria-label="Volume precision" title="Volume precision: enter an integer from 0 to 12 decimal places." placeholder="precision">
       <select id="page-size" aria-label="Rows per page">
         <option value="50">50 rows</option>
         <option value="100" selected>100 rows</option>
@@ -701,10 +706,13 @@
     const R2_BASE_URL = "https://data.diagram.site/";
     const SHOW_13_CROSSINGS = new URLSearchParams(window.location.search).get("show13") === "1";
     const MAX_VISIBLE_CROSSING = SHOW_13_CROSSINGS ? 13 : 12;
+    const DEFAULT_VOLUME_PRECISION = 4;
+    const MAX_VOLUME_PRECISION = 12;
 
     let records = [];
     let filtered = [];
     let page = 1;
+    let volumePrecision = DEFAULT_VOLUME_PRECISION;
     const jsonCache = new Map();
     let activeViewerPanel = "summary";
     let rawJsonEditor = null;
@@ -716,6 +724,7 @@
     const crossingFilter = document.getElementById("crossing-filter");
     const hyperbolicFilter = document.getElementById("hyperbolic-filter");
     const dimensionFilter = document.getElementById("dimension-filter");
+    const volumePrecisionInput = document.getElementById("volume-precision");
     const pageSizeSelect = document.getElementById("page-size");
     const resultCount = document.getElementById("result-count");
     const pageLabel = document.getElementById("page-label");
@@ -765,9 +774,25 @@
       return String(value).replace(/`\d+(?:\.\d+)?/g, "");
     }
 
+    function parseVolumePrecision(value) {
+      const text = String(value ?? "").trim();
+      if (!/^\d+$/.test(text)) {
+        return DEFAULT_VOLUME_PRECISION;
+      }
+      return Math.min(Number(text), MAX_VOLUME_PRECISION);
+    }
+
+    function syncVolumePrecision() {
+      volumePrecision = parseVolumePrecision(volumePrecisionInput.value);
+    }
+
     function shortNumber(value) {
-      const rounded = Number(value).toFixed(4);
-      return rounded.replace(/\.?0+$/, "");
+      const number = Number(value);
+      if (!Number.isFinite(number)) {
+        return String(value);
+      }
+      const rounded = number.toFixed(volumePrecision);
+      return rounded.includes(".") ? rounded.replace(/\.?0+$/, "") : rounded;
     }
 
     function parseComplexParts(value) {
@@ -820,6 +845,37 @@
         .replace(/\bI\b/g, "sqrt(-1)")
         .replace(/-?\d+\.\d+/g, number => shortNumber(number));
       return escapeHtml(formatted).replaceAll("sqrt(-1)", "&radic;&minus;1");
+    }
+
+    function searchableVolumeText(record) {
+      if (!record.hyperbolic || !record.geometricVolume || record.geometricVolume.length === 0) {
+        return "";
+      }
+
+      const values = record.geometricVolume;
+      if (Array.isArray(values) && values.length === 2) {
+        const first = parseComplexParts(values[0]);
+        const second = parseComplexParts(values[1]);
+        if (first && second && Math.abs(first.real - second.real) <= 1e-6 && Math.abs(first.imaginary + second.imaginary) <= 1e-6) {
+          return [
+            shortNumber(first.real),
+            shortNumber(Math.abs(first.imaginary)),
+            `${shortNumber(first.real)} ${shortNumber(Math.abs(first.imaginary))}`
+          ].join(" ");
+        }
+      }
+
+      return values.map(value => {
+        const parts = parseComplexParts(value);
+        if (!parts) {
+          return stripPrecision(value).replace(/\s+/g, " ").trim();
+        }
+        return [
+          shortNumber(parts.real),
+          shortNumber(Math.abs(parts.imaginary)),
+          `${shortNumber(parts.real)} ${shortNumber(Math.abs(parts.imaginary))}`
+        ].join(" ");
+      }).join(" ");
     }
 
     function matrixChip(value, component, kind) {
@@ -897,9 +953,8 @@
         record.crossing,
         record.hyperbolic,
         record.hasPositiveDimensionalIdeal,
-        record.geometricVolume && record.geometricVolume.join(" "),
-        record.solutionCounts && record.solutionCounts.join(" "),
-        record.obstructions && record.obstructions.join(" ")
+        searchableVolumeText(record),
+        record.solutionCounts && record.solutionCounts.join(" ")
       ].join(" ").toLowerCase();
     }
 
@@ -1705,6 +1760,7 @@
     }
 
     async function init() {
+      syncVolumePrecision();
       browserSubtitle.textContent = `Boundary parabolic representation data for knots up to ${MAX_VISIBLE_CROSSING} crossings.`;
       const response = await fetch(MANIFEST_URL);
       records = (await response.json()).filter(record => (
@@ -1724,6 +1780,10 @@
     crossingFilter.addEventListener("change", applyFilters);
     hyperbolicFilter.addEventListener("change", applyFilters);
     dimensionFilter.addEventListener("change", applyFilters);
+    volumePrecisionInput.addEventListener("input", () => {
+      syncVolumePrecision();
+      applyFilters();
+    });
     pageSizeSelect.addEventListener("change", () => {
       page = 1;
       render();
