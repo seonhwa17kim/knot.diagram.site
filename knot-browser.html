@@ -617,7 +617,7 @@
     <div class="topline">
       <div>
         <h1>Knot Data Browser</h1>
-        <p class="subtle">Boundary parabolic representation data for knots up to 13 crossings.</p>
+        <p class="subtle" id="browser-subtitle">Boundary parabolic representation data for knots up to 12 crossings.</p>
       </div>
       <a href="./index.html">Back to original table</a>
     </div>
@@ -699,6 +699,8 @@
   <script>
     const MANIFEST_URL = "parabolic/data/knot-browser-manifest.json";
     const R2_BASE_URL = "https://data.diagram.site/";
+    const SHOW_13_CROSSINGS = new URLSearchParams(window.location.search).get("show13") === "1";
+    const MAX_VISIBLE_CROSSING = SHOW_13_CROSSINGS ? 13 : 12;
 
     let records = [];
     let filtered = [];
@@ -723,6 +725,7 @@
     const viewer = document.getElementById("viewer");
     const viewerTitle = document.getElementById("viewer-title");
     const viewerBody = document.getElementById("viewer-body");
+    const browserSubtitle = document.getElementById("browser-subtitle");
 
     function escapeHtml(value) {
       return String(value ?? "")
@@ -907,7 +910,7 @@
 
       if (/^\d+$/.test(query)) {
         const numeric = Number(query);
-        if (numeric >= 3 && numeric <= 13) {
+        if (numeric >= 3 && numeric <= MAX_VISIBLE_CROSSING) {
           return record.crossing === numeric;
         }
       }
@@ -1702,8 +1705,11 @@
     }
 
     async function init() {
+      browserSubtitle.textContent = `Boundary parabolic representation data for knots up to ${MAX_VISIBLE_CROSSING} crossings.`;
       const response = await fetch(MANIFEST_URL);
-      records = await response.json();
+      records = (await response.json()).filter(record => (
+        Number.isInteger(record.crossing) && record.crossing <= MAX_VISIBLE_CROSSING
+      ));
 
       const crossings = Array.from(new Set(records.map(record => record.crossing))).sort((a, b) => a - b);
       crossingFilter.insertAdjacentHTML("beforeend", crossings.map(crossing => (
